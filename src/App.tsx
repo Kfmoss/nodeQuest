@@ -32,6 +32,7 @@ import {
   Zap,
 } from "lucide-react";
 import amandaImage from "./assets/amanda.png";
+import appLogo from "./assets/logo.png";
 import novaImage from "./assets/novax.png";
 import "./App.css";
 
@@ -448,7 +449,7 @@ function App() {
           aria-label="nodeQuest hjem"
         >
           <span className="brand-mark">
-            <Gamepad2 size={21} strokeWidth={2.5} />
+            <img src={appLogo} alt="" />
           </span>
           <span>
             node<span>Quest</span>
