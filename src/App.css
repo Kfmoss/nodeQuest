@@ -378,3 +378,68 @@
   .continue-info > strong { font-size: 12px; }
   .task-description { font-size: 13px; }
 }
+
+.nova-page { width: min(100%, 1100px); min-height: calc(100vh - 120px); margin: 0 auto; padding: 31px clamp(22px, 4.3vw, 64px) 28px; }
+.nova-story-hero { display: grid; grid-template-columns: minmax(210px, .8fr) minmax(0, 1.25fr); align-items: center; gap: clamp(24px, 5vw, 64px); padding: clamp(22px, 4vw, 42px); border: 1px solid #e5e8f0; border-radius: 8px; background: #fff; }
+.nova-portraits { width: 100%; max-width: 350px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-self: center; gap: 10px; }
+.nova-character { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 9px; }
+.nova-character-nova { background: #e9edfa; }
+.nova-character-amanda { background: #f2eaf6; }
+.nova-character img { width: 100%; height: 100%; display: block; object-fit: contain; }
+.nova-character > span { position: absolute; right: 7px; bottom: 7px; left: 7px; padding: 8px 6px; border: 1px solid #ffffffa3; border-radius: 5px; color: #344467; background: #ffffffed; font: 600 12px var(--display); text-align: center; }
+.nova-story-copy { max-width: 580px; }
+.nova-story-copy .eyebrow { font-size: 11px; }
+.nova-story-copy h1 { margin: 0 0 14px; color: #252b3e; font: 600 34px/1.25 var(--display); }
+.nova-story-copy > p:not(.eyebrow) { margin: 0 0 13px; color: #626a7c; font-size: 15px; line-height: 1.75; }
+.nova-story-copy > p.nova-intro { color: #333c52; font-size: 17px; line-height: 1.7; }
+.nova-cta { min-height: 48px; margin-top: 5px; font-size: 14px; }
+.nova-interests { margin-top: 27px; }
+.nova-section-heading { margin-bottom: 12px; }
+.nova-section-heading .eyebrow { margin-bottom: 4px; }
+.nova-section-heading h2 { margin: 0; color: #252b3e; font: 600 22px/1.4 var(--display); }
+.nova-interest-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.nova-interest { min-width: 0; padding: 17px; border: 1px solid #e5e8f0; border-radius: 7px; background: #fff; }
+.nova-interest > span { width: 38px; height: 38px; display: grid; place-items: center; margin-bottom: 13px; border-radius: 8px; }
+.music-interest > span { color: #6255a6; background: #eeeafd; }
+.gaming-interest > span { color: #227965; background: #daf5eb; }
+.chess-interest > span { color: #9a6b1a; background: #fff0cc; }
+.design-interest > span { color: #a64d54; background: #ffe7e5; }
+.nova-interest h3 { margin: 0 0 5px; color: #30374b; font: 600 15px/1.4 var(--display); }
+.nova-interest p { margin: 0; color: #697184; font-size: 12px; line-height: 1.65; }
+.nova-shared-reading { display: flex; align-items: flex-start; gap: 12px; margin-top: 14px; padding: 14px 16px; border: 1px solid #dfe5f5; border-radius: 7px; color: #5668a8; background: #f5f7ff; }
+.nova-shared-reading > svg { flex: 0 0 auto; margin-top: 2px; }
+.nova-shared-reading > div > .eyebrow { margin: 0 0 4px; color: #6979b1; font-size: 10px; }
+.nova-shared-reading p:last-child { margin: 0; color: #667087; font-size: 13px; line-height: 1.6; }
+.nova-shared-reading strong { color: #384978; }
+.nova-future { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 14px 16px; border: 1px solid #dfe7cf; border-radius: 6px; color: #4d6636; background: #f7faef; }
+.nova-future > svg { flex: 0 0 auto; }
+.nova-future p { margin: 0; color: #59654f; font-size: 13px; line-height: 1.6; }
+.nova-future strong { color: #354829; }
+
+@media (max-width: 900px) {
+  .nova-interest-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .nova-page { padding: 25px 20px 20px; }
+  .nova-story-hero { grid-template-columns: 1fr; gap: 22px; padding: 22px; }
+  .nova-portraits { width: min(100%, 360px); }
+}
+
+@media (max-width: 540px) {
+  .nova-page { padding: 22px 14px 17px; }
+  .nova-story-hero { gap: 18px; padding: 16px; }
+  .nova-portraits { gap: 8px; }
+  .nova-character > span { right: 5px; bottom: 5px; left: 5px; padding: 7px 4px; }
+  .nova-story-copy h1 { font-size: 29px; }
+  .nova-story-copy > p:not(.eyebrow) { font-size: 14px; line-height: 1.75; }
+  .nova-story-copy > p.nova-intro { font-size: 16px; }
+  .nova-interest-grid { grid-template-columns: 1fr; gap: 9px; }
+  .nova-interest { display: grid; grid-template-columns: 38px 1fr; column-gap: 11px; padding: 13px; }
+  .nova-interest > span { grid-row: span 2; margin: 0; }
+  .nova-interest h3 { align-self: end; }
+  .nova-interest p { align-self: start; }
+  .nova-shared-reading { padding: 12px; }
+  .nova-shared-reading p:last-child { font-size: 12px; }
+  .nova-future { align-items: flex-start; padding: 12px; }
+}

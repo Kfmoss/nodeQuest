@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   BadgeCheck,
   BookOpen,
+  Brain,
   Braces,
   Check,
   ChevronRight,
@@ -20,6 +21,8 @@ import {
   Layers3,
   Lightbulb,
   Monitor,
+  Music2,
+  Palette,
   Play,
   Server,
   ShoppingBag,
@@ -28,6 +31,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import amandaImage from "./assets/amanda.png";
 import novaImage from "./assets/novax.png";
 import "./App.css";
 
@@ -137,6 +141,7 @@ const resources = [
 const MAX_TASK_TIME_MINUTES = 10;
 const MAX_TASK_TIME_SECONDS = MAX_TASK_TIME_MINUTES * 60;
 const MAX_TASK_POINTS = 10;
+const POINTS_PER_LEVEL = 500;
 
 type ChoiceQuestion = {
   question: string;
@@ -247,7 +252,8 @@ function App() {
     (typeof tasks)[number][]
   >([]);
   const [recommendationMessage, setRecommendationMessage] = useState("");
-  const [points, setPoints] = useState(120);
+  const [points, setPoints] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
   const [purchased, setPurchased] = useState(false);
 
   const showTasks = (topic = "Alle oppgaver") => {
@@ -266,6 +272,9 @@ function App() {
       : resources.filter((resource) => resource.topic === selectedTopic);
   const currentQuestion = quizQuestions[questionIndex];
   const isCorrectAnswer = answerWasCorrect === true;
+  const playerLevel = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
+  const pointsInCurrentLevel = totalPoints % POINTS_PER_LEVEL;
+  const pointsToNextLevel = POINTS_PER_LEVEL - pointsInCurrentLevel;
   const formattedTime = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
 
   useEffect(() => {
@@ -365,6 +374,7 @@ function App() {
       setCorrectAnswers((current) => current + 1);
       setQuizPoints((current) => current + score);
       setPoints((current) => current + score);
+      setTotalPoints((current) => current + score);
     } else {
       setMissedTopics((current) => [...current, currentQuestion.topic]);
     }
@@ -489,6 +499,15 @@ function App() {
               </span>
               <span>Alle oppgaver</span>
             </button>
+            <button
+              className={`nav-item ${view === "nova" ? "is-active" : ""}`}
+              onClick={() => setView("nova")}
+            >
+              <span className="nav-icon mint">
+                <Sparkles size={15} />
+              </span>
+              <span>Nova</span>
+            </button>
           </div>
         </div>
 
@@ -512,14 +531,16 @@ function App() {
             <strong>
               {view === "tasks"
                 ? "Oppgaver"
-                : view === "test"
-                  ? "Lærlingetest"
-                  : "Min læringsside"}
+                : view === "nova"
+                  ? "Om Nova"
+                  : view === "test"
+                    ? "Lærlingetest"
+                    : "Min læringsside"}
             </strong>
           </div>
           <div className="top-actions">
             <div className="level-pill">
-              <span className="level-dot" /> NIVÅ <strong>04</strong>
+              <span className="level-dot" /> NIVÅ <strong>{String(playerLevel).padStart(2, "0")}</strong>
             </div>
             <div className="points-pill">
               <span className="coin">✦</span>
@@ -729,20 +750,105 @@ function App() {
                   <span className="trophy-icon">
                     <Trophy size={18} />
                   </span>
-                  <span className="level-chip">NIVÅ 04</span>
+                  <span className="level-chip">NIVÅ {String(playerLevel).padStart(2, "0")}</span>
                 </div>
                 <div className="level-card-copy">
                   <strong>Digital oppdager</strong>
-                  <span>80 XP igjen til nivå 5</span>
+                  <span>{pointsToNextLevel} poeng til nivå {playerLevel + 1}</span>
                 </div>
-                <div className="xp-track">
-                  <i />
+                <div className="xp-track" role="progressbar" aria-label="Fremdrift til neste nivå" aria-valuemin={0} aria-valuemax={POINTS_PER_LEVEL} aria-valuenow={pointsInCurrentLevel}>
+                  <i style={{ width: `${(pointsInCurrentLevel / POINTS_PER_LEVEL) * 100}%` }} />
                 </div>
                 <div className="xp-caption">
-                  <span>420 XP</span>
-                  <span>500 XP</span>
+                  <span>{pointsInCurrentLevel} poeng</span>
+                  <span>{POINTS_PER_LEVEL} poeng</span>
                 </div>
               </section>
+            </div>
+          </section>
+        ) : view === "nova" ? (
+          <section className="nova-page">
+            <button className="back-link" onClick={() => setView("home")}>
+              <ArrowLeft size={15} /> Til oversikten
+            </button>
+            <div className="nova-story-hero">
+              <div className="nova-portraits" aria-label="Nova og Amanda">
+                <div className="nova-character nova-character-nova">
+                  <img src={novaImage} alt="Nova" />
+                  <span>Nova</span>
+                </div>
+                <div className="nova-character nova-character-amanda">
+                  <img src={amandaImage} alt="Amanda" />
+                  <span>Amanda</span>
+                </div>
+              </div>
+              <div className="nova-story-copy">
+                <p className="eyebrow"><span className="eyebrow-line" /> HISTORIEN MIN</p>
+                <h1>Hei, jeg er Nova.</h1>
+                <p className="nova-intro">
+                  På fritiden liker jeg å høre på musikk, game og spille sjakk.
+                  Musikk hjelper meg å koble av, gaming tar meg med inn i nye
+                  verdener, og sjakk får meg til å tenke flere trekk fram.
+                </p>
+                <p>
+                  En dag viste jeg Amanda hvordan teknologien fungerer. Hun
+                  syntes det var spennende å se hvordan alt henger sammen, og
+                  fikk lyst til å prøve selv. Nå liker vi å utforske nye ting
+                  sammen.
+                </p>
+                <p>
+                  Jeg valgte informatikk og medie fordi jeg synes det er gøy å
+                  lage ting selv. Jeg liker spesielt godt å lage logoer og se
+                  en idé bli til noe andre kan bruke.
+                </p>
+                <p>
+                  Samtidig lærer jeg ferdigheter som kan åpne døra til en jobb
+                  i IT-bransjen. I framtiden håper jeg å jobbe med teknologi og
+                  kreative digitale løsninger.
+                </p>
+                <button className="primary-button nova-cta" onClick={() => showTasks()}>
+                  Bli med på en oppgave <ArrowUpRight size={16} />
+                </button>
+              </div>
+            </div>
+            <section className="nova-interests" aria-labelledby="nova-interests-title">
+              <div className="nova-section-heading">
+                <p className="eyebrow">NÅR JEG IKKE KODER</p>
+                <h2 id="nova-interests-title">Ting jeg liker</h2>
+              </div>
+              <div className="nova-interest-grid">
+                <article className="nova-interest music-interest">
+                  <span><Music2 size={21} /></span>
+                  <h3>Musikk</h3>
+                  <p>En god spilleliste gjør nesten alt litt bedre.</p>
+                </article>
+                <article className="nova-interest gaming-interest">
+                  <span><Gamepad2 size={21} /></span>
+                  <h3>Gaming</h3>
+                  <p>Jeg liker å utforske verdener og løse utfordringer.</p>
+                </article>
+                <article className="nova-interest chess-interest">
+                  <span><Brain size={21} /></span>
+                  <h3>Sjakk</h3>
+                  <p>Det er gøy å planlegge, tenke smart og lære av hvert trekk.</p>
+                </article>
+                <article className="nova-interest design-interest">
+                  <span><Palette size={21} /></span>
+                  <h3>Logodesign</h3>
+                  <p>Jeg liker å gjøre ideer om til tydelige visuelle uttrykk.</p>
+                </article>
+              </div>
+            </section>
+            <div className="nova-shared-reading">
+              <BookOpen size={22} />
+              <div>
+                <p className="eyebrow">NOE VI BEGGE LIKER</p>
+                <p><strong>Fantasy og science fiction.</strong> Vi liker historier med nye verdener, framtidsteknologi og oppfinnelser.</p>
+              </div>
+            </div>
+            <div className="nova-future">
+              <Code2 size={21} />
+              <p><strong>Drømmen min?</strong> Å bruke kreativitet og teknologi i en jobb i IT-bransjen.</p>
             </div>
           </section>
         ) : view === "tasks" ? (
