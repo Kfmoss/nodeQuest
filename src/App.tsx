@@ -26,7 +26,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import novaImage from "./assets/nova.png";
+import novaImage from "./assets/Nova.png";
 import "./App.css";
 
 const topics = [
