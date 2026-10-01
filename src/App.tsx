@@ -141,7 +141,6 @@ const resources = [
 const MAX_TASK_TIME_MINUTES = 10;
 const MAX_TASK_TIME_SECONDS = MAX_TASK_TIME_MINUTES * 60;
 const MAX_TASK_POINTS = 10;
-const POINTS_PER_LEVEL = 500;
 
 type ChoiceQuestion = {
   question: string;
@@ -220,6 +219,11 @@ const quizQuestions: QuizQuestion[] = [
   },
 ];
 
+const LEVEL_TWO_PASS_PERCENT = 90;
+const REQUIRED_CORRECT_FOR_LEVEL_TWO = Math.ceil(
+  (quizQuestions.length * LEVEL_TWO_PASS_PERCENT) / 100,
+);
+
 function App() {
   const today = new Intl.DateTimeFormat("nb-NO", {
     weekday: "long",
@@ -253,7 +257,9 @@ function App() {
   >([]);
   const [recommendationMessage, setRecommendationMessage] = useState("");
   const [points, setPoints] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [playerLevel, setPlayerLevel] = useState(1);
+  const [bestAssessmentScore, setBestAssessmentScore] = useState(0);
+  const [assessmentPassed, setAssessmentPassed] = useState(false);
   const [purchased, setPurchased] = useState(false);
 
   const showTasks = (topic = "Alle oppgaver") => {
@@ -272,9 +278,6 @@ function App() {
       : resources.filter((resource) => resource.topic === selectedTopic);
   const currentQuestion = quizQuestions[questionIndex];
   const isCorrectAnswer = answerWasCorrect === true;
-  const playerLevel = Math.floor(totalPoints / POINTS_PER_LEVEL) + 1;
-  const pointsInCurrentLevel = totalPoints % POINTS_PER_LEVEL;
-  const pointsToNextLevel = POINTS_PER_LEVEL - pointsInCurrentLevel;
   const formattedTime = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
 
   useEffect(() => {
@@ -340,6 +343,7 @@ function App() {
     setQuizPoints(0);
     setRemainingSeconds(MAX_TASK_TIME_SECONDS);
     setTimeExpired(false);
+    setAssessmentPassed(false);
     questionDeadline.current = Date.now() + MAX_TASK_TIME_SECONDS * 1000;
     setDialog("test");
   };
@@ -374,7 +378,6 @@ function App() {
       setCorrectAnswers((current) => current + 1);
       setQuizPoints((current) => current + score);
       setPoints((current) => current + score);
-      setTotalPoints((current) => current + score);
     } else {
       setMissedTopics((current) => [...current, currentQuestion.topic]);
     }
@@ -383,6 +386,7 @@ function App() {
 
   const nextQuestion = () => {
     if (questionIndex === quizQuestions.length - 1) {
+      const passed = correctAnswers >= REQUIRED_CORRECT_FOR_LEVEL_TWO;
       const practiceTopics = [...new Set(missedTopics)];
       const matchedTasks = practiceTopics
         .map((topic) => tasks.find((task) => task.topic === topic))
@@ -397,6 +401,9 @@ function App() {
           ? "Nova har funnet oppgaver i temaene du kan øve litt mer på."
           : "Full pott! Nova foreslår et nytt tema du kan utforske videre.",
       );
+      setBestAssessmentScore((best) => Math.max(best, correctAnswers));
+      setAssessmentPassed(passed);
+      if (passed) setPlayerLevel((level) => Math.max(level, 2));
       setTestComplete(true);
       return;
     }
@@ -753,15 +760,19 @@ function App() {
                   <span className="level-chip">NIVÅ {String(playerLevel).padStart(2, "0")}</span>
                 </div>
                 <div className="level-card-copy">
-                  <strong>Digital oppdager</strong>
-                  <span>{pointsToNextLevel} poeng til nivå {playerLevel + 1}</span>
+                  <strong>{playerLevel === 1 ? "Digital oppdager" : "Teknologisk utforsker"}</strong>
+                  <span>
+                    {playerLevel >= 2
+                      ? "Kartlegging bestått"
+                      : `${bestAssessmentScore} av ${quizQuestions.length} riktige · ${LEVEL_TWO_PASS_PERCENT} % for nivå 2`}
+                  </span>
                 </div>
-                <div className="xp-track" role="progressbar" aria-label="Fremdrift til neste nivå" aria-valuemin={0} aria-valuemax={POINTS_PER_LEVEL} aria-valuenow={pointsInCurrentLevel}>
-                  <i style={{ width: `${(pointsInCurrentLevel / POINTS_PER_LEVEL) * 100}%` }} />
+                <div className="xp-track" role="progressbar" aria-label="Kartleggingsresultat mot nivå 2" aria-valuemin={0} aria-valuemax={quizQuestions.length} aria-valuenow={bestAssessmentScore}>
+                  <i style={{ width: `${(bestAssessmentScore / quizQuestions.length) * 100}%` }} />
                 </div>
                 <div className="xp-caption">
-                  <span>{pointsInCurrentLevel} poeng</span>
-                  <span>{POINTS_PER_LEVEL} poeng</span>
+                  <span>{bestAssessmentScore} av {quizQuestions.length} riktige</span>
+                  <span>{LEVEL_TWO_PASS_PERCENT} % kreves</span>
                 </div>
               </section>
             </div>
@@ -1051,10 +1062,15 @@ function App() {
                   <span className="modal-icon test-modal-icon">
                     <Trophy size={22} />
                   </span>
-                  <p className="eyebrow">LÆRLINGETEST · FULLFØRT</p>
-                  <h2 id="modal-title">Bra jobba!</h2>
+                  <p className="eyebrow">KARTLEGGING · FULLFØRT</p>
+                  <h2 id="modal-title">{assessmentPassed ? "Du er på nivå 2!" : "Bra jobba!"}</h2>
                   <p className="modal-lead">
                     Du fikk {correctAnswers} av {quizQuestions.length} riktige og samlet {quizPoints} poeng.
+                  </p>
+                  <p className={`level-result ${assessmentPassed ? "passed" : ""}`} role="status">
+                    {assessmentPassed
+                      ? "Du svarte riktig på minst 90 % av kartleggingen. Nivå 2 er låst opp!"
+                      : `Du trenger minst ${REQUIRED_CORRECT_FOR_LEVEL_TWO} av ${quizQuestions.length} riktige (${LEVEL_TWO_PASS_PERCENT} %) for å nå nivå 2.`}
                   </p>
                   <div className="result-recommendations">
                     <strong>{recommendationMessage}</strong>
