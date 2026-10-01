@@ -33,6 +33,11 @@ import {
 } from "lucide-react";
 import amandaImage from "./assets/amanda.png";
 import appLogo from "./assets/logo.png";
+import moto1Image from "./assets/moto1.png";
+import moto2Image from "./assets/moto2.png";
+import moto3Image from "./assets/moto3.png";
+import moto4Image from "./assets/moto4.png";
+import moto5Image from "./assets/moto5.png";
 import novaImage from "./assets/novax.png";
 import "./App.css";
 
@@ -137,6 +142,14 @@ const resources = [
     icon: Server,
     color: "coral",
   },
+];
+
+const motorcycles = [
+  { id: "moto1", name: "Moto 1", style: "Touring", description: "En komfortabel turkamerat for de lange veiene.", price: 10, image: moto1Image, alt: "Rød touringmotorsykkel" },
+  { id: "moto2", name: "Moto 2", style: "Cruiser", description: "Klassisk cruiser med blanke detaljer og god stil.", price: 20, image: moto2Image, alt: "Gul cruisermotorsykkel" },
+  { id: "moto3", name: "Moto 3", style: "Sport", description: "En lett og rask sportssykkel med blå detaljer.", price: 30, image: moto3Image, alt: "Blå og hvit sportssykkel" },
+  { id: "moto4", name: "Moto 4", style: "Racing", description: "En gul racermodell for deg som liker fart.", price: 40, image: moto4Image, alt: "Gul racermotorsykkel" },
+  { id: "moto5", name: "Moto 5", style: "Custom", description: "En mørkegrønn custom med et helt eget uttrykk.", price: 50, image: moto5Image, alt: "Mørkegrønn custommotorsykkel" },
 ];
 
 const MAX_TASK_TIME_MINUTES = 10;
@@ -258,6 +271,7 @@ function App() {
   >([]);
   const [recommendationMessage, setRecommendationMessage] = useState("");
   const [points, setPoints] = useState(0);
+  const [ownedMotorcycles, setOwnedMotorcycles] = useState<string[]>([]);
   const [playerLevel, setPlayerLevel] = useState(1);
   const [bestAssessmentScore, setBestAssessmentScore] = useState(0);
   const [assessmentPassed, setAssessmentPassed] = useState(false);
@@ -267,6 +281,13 @@ function App() {
     setSelectedTopic(topic);
     setCatalogTab("tasks");
     setView("tasks");
+  };
+
+  const buyMotorcycle = (motorcycle: (typeof motorcycles)[number]) => {
+    if (ownedMotorcycles.includes(motorcycle.id) || points < motorcycle.price)
+      return;
+    setPoints((current) => current - motorcycle.price);
+    setOwnedMotorcycles((current) => [...current, motorcycle.id]);
   };
 
   const visibleTasks =
@@ -539,11 +560,13 @@ function App() {
             <strong>
               {view === "tasks"
                 ? "Oppgaver"
-                : view === "nova"
-                  ? "Om Nova"
-                  : view === "test"
-                    ? "Lærlingetest"
-                    : "Min læringsside"}
+                : view === "shop"
+                  ? "Butikk"
+                  : view === "nova"
+                    ? "Om Nova"
+                    : view === "test"
+                      ? "Lærlingetest"
+                      : "Min læringsside"}
             </strong>
           </div>
           <div className="top-actions">
@@ -555,7 +578,7 @@ function App() {
               <span>POENG</span>
               <strong>{points}</strong>
             </div>
-            <button className="shop-button" onClick={() => setDialog("store")}>
+            <button className="shop-button" onClick={() => setView("shop")}>
               <ShoppingBag size={16} /> Butikk
             </button>
             <button className="profile-button" aria-label="Elevprofil">
@@ -776,6 +799,54 @@ function App() {
                   <span>{LEVEL_TWO_PASS_PERCENT} % kreves</span>
                 </div>
               </section>
+            </div>
+          </section>
+        ) : view === "shop" ? (
+          <section className="catalog-page shop-page">
+            <button className="back-link" onClick={() => setView("home")}>
+              <ArrowLeft size={15} /> Til oversikten
+            </button>
+            <div className="catalog-heading shop-heading">
+              <div>
+                <p className="eyebrow"><span className="eyebrow-line" /> NODEQUEST-BUTIKKEN</p>
+                <h1>Motorsykkelbutikken</h1>
+                <p className="welcome-copy">Bruk poengene dine til å hente en ny motorsykkel til garasjen.</p>
+              </div>
+              <div className="shop-balance">
+                <span>DIN SALDO</span>
+                <strong><span className="coin">✦</span> {points} poeng</strong>
+              </div>
+            </div>
+            <div className="moto-grid">
+              {motorcycles.map((motorcycle) => {
+                const owned = ownedMotorcycles.includes(motorcycle.id);
+                const canAfford = points >= motorcycle.price;
+                return (
+                  <article className="moto-card" key={motorcycle.id}>
+                    <div className="moto-image">
+                      <img src={motorcycle.image} alt={motorcycle.alt} />
+                      <span>{motorcycle.style}</span>
+                    </div>
+                    <div className="moto-card-body">
+                      <div>
+                        <p className="moto-number">GARASJE · {motorcycle.id.toUpperCase()}</p>
+                        <h2>{motorcycle.name}</h2>
+                        <p className="moto-description">{motorcycle.description}</p>
+                      </div>
+                      <div className="moto-card-footer">
+                        <strong><span className="coin">✦</span> {motorcycle.price}</strong>
+                        <button
+                          className="moto-buy-button"
+                          disabled={owned || !canAfford}
+                          onClick={() => buyMotorcycle(motorcycle)}
+                        >
+                          {owned ? "Kjøpt" : canAfford ? "Kjøp" : "For få poeng"}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </section>
         ) : view === "nova" ? (
@@ -1034,8 +1105,8 @@ function App() {
           <span>
             nodeQuest <i /> Lær gjennom å gjøre
           </span>
-          <button onClick={() => setDialog("store")}>
-            <CircleHelp size={14} /> Hjelp
+          <button onClick={() => setView("shop")}>
+            <ShoppingBag size={14} /> Butikk
           </button>
           <ArrowDownRight size={14} />
         </footer>
