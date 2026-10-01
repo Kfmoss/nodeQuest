@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import confetti from "canvas-confetti";
 import {
   ArrowDownRight,
   ArrowLeft,
@@ -298,6 +299,24 @@ function App() {
 
     return () => window.clearInterval(timer);
   }, [answer, currentQuestion.topic, dialog, testComplete, timeExpired]);
+
+  useEffect(() => {
+    if (
+      !testComplete ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    confetti({
+      particleCount: 110,
+      spread: 76,
+      startVelocity: 38,
+      gravity: 0.9,
+      origin: { x: 0.5, y: 0.62 },
+      colors: ["#c8f37b", "#c7c9f8", "#72dc77", "#f4e79f", "#ff887a"],
+    });
+  }, [testComplete]);
 
   const startTest = () => {
     setView("test");

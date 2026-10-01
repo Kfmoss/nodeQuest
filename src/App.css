@@ -311,3 +311,70 @@
   .app-footer { padding-inline: 14px; }
   .modal { padding: 23px 19px; }
 }
+
+.nav-heading { font-size: 12px; }
+.nav-item { font-size: 14px; }
+.sidebar-footer strong { font-size: 13px; }
+.sidebar-footer span { font-size: 12px; }
+.breadcrumb { font-size: 13px; }
+.level-pill, .points-pill { font-size: 11px; }
+.shop-button, .profile-button { font-size: 13px; }
+.eyebrow { font-size: 11px; }
+.welcome-row h1 { font-size: 34px; }
+.welcome-copy { font-size: 14px; line-height: 1.65; }
+.daily-badge strong { font-size: 10px; }
+.daily-badge small { font-size: 12px; }
+.hero-kicker, .hero-label { font-size: 10px; }
+.hero-copy p { font-size: 13px; line-height: 1.6; }
+.action-text small { font-size: 10px; }
+.action-text strong { font-size: 14px; }
+.board-foot { font-size: 10px; }
+.recommendation-heading .eyebrow, .section-title .eyebrow { font-size: 10px; }
+.recommendation-heading h2 { font-size: 17px; }
+.recommendation-heading div > p:last-child { font-size: 12px; line-height: 1.55; }
+.recommendation-card-copy small, .recommendation-card-copy > span { font-size: 10px; }
+.recommendation-card-copy strong { font-size: 12px; }
+.section-title h2 { font-size: 19px; }
+.text-link, .back-link { font-size: 12px; }
+.continue-info > strong { font-size: 13px; }
+.continue-info small { font-size: 11px; }
+.continue-xp { font-size: 11px; }
+.level-chip { font-size: 10px; }
+.level-card-copy strong { font-size: 12px; }
+.level-card-copy span, .xp-caption { font-size: 10px; }
+.app-footer { font-size: 10px; }
+.catalog-heading .eyebrow { font-size: 11px; }
+.catalog-stats { font-size: 12px; }
+.catalog-tabs button { font-size: 13px; }
+.catalog-tabs button span { font-size: 11px; }
+.task-xp { font-size: 11px; }
+.task-topic { font-size: 11px; }
+.task-card h2 { font-size: 16px; line-height: 1.45; }
+.task-description { font-size: 12px; line-height: 1.65; }
+.task-meta, .task-open { font-size: 12px; }
+.empty-state > p:not(.eyebrow), .test-intro > p:not(.eyebrow) { font-size: 14px; line-height: 1.65; }
+.resource-note p { font-size: 11px; line-height: 1.6; }
+.modal .eyebrow { font-size: 10px; }
+.result-recommendations > strong { font-size: 12px; }
+.result-recommendation small { font-size: 10px; }
+.result-recommendation b { font-size: 12px; }
+
+@media (max-width: 760px) {
+  .nav-item { font-size: 12px; }
+}
+
+@media (max-width: 540px) {
+  .breadcrumb { font-size: 11px; }
+  .points-pill { font-size: 10px; }
+  .points-pill strong { font-size: 12px; }
+  .nav-item { font-size: 12px; }
+  .welcome-row h1 { font-size: 27px; }
+  .welcome-copy { font-size: 13px; }
+  .hero-copy h2 { font-size: 21px; }
+  .hero-copy p { font-size: 13px; }
+  .action-text small { font-size: 10px; }
+  .section-title h2 { font-size: 17px; }
+  .section-title .text-link { font-size: 11px; }
+  .continue-info > strong { font-size: 12px; }
+  .task-description { font-size: 13px; }
+}
