@@ -12,7 +12,9 @@ import {
   Code2,
   Database,
   Gamepad2,
+  GitBranch,
   GraduationCap,
+  Image,
   Layers3,
   Lightbulb,
   Monitor,
@@ -24,12 +26,15 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import novaImage from "./assets/nova.png";
 import "./App.css";
 
 const topics = [
   { label: "HTML, CSS og JavaScript", icon: Code2, color: "mint" },
   { label: "Feilsøking", icon: Lightbulb, color: "yellow" },
   { label: "Server og tjenester", icon: Server, color: "coral" },
+  { label: "Programmering og Git", icon: GitBranch, color: "lilac" },
+  { label: "Mediekommunikasjon", icon: Image, color: "coral" },
   { label: "Operativsystemer", icon: Monitor, color: "blue" },
   { label: "Databaser", icon: Database, color: "lilac" },
 ];
@@ -63,6 +68,36 @@ const tasks = [
     minutes: 8,
     xp: 20,
     icon: Server,
+    color: "coral",
+  },
+  {
+    title: "Versjoner koden din med Git",
+    topic: "Programmering og Git",
+    description: "Øv på å lagre endringer og følge utviklingen i et prosjekt.",
+    level: "Nybegynner",
+    minutes: 10,
+    xp: 25,
+    icon: GitBranch,
+    color: "lilac",
+  },
+  {
+    title: "Planlegg en enkel database",
+    topic: "Databaser",
+    description: "Sorter informasjon i tabeller og finn gode felter for hver type data.",
+    level: "Nybegynner",
+    minutes: 12,
+    xp: 30,
+    icon: Database,
+    color: "blue",
+  },
+  {
+    title: "Gi bildene gode beskrivelser",
+    topic: "Mediekommunikasjon",
+    description: "Skriv alternativtekst som gjør medieinnhold mer tilgjengelig.",
+    level: "Nybegynner",
+    minutes: 8,
+    xp: 20,
+    icon: Image,
     color: "coral",
   },
 ];
@@ -100,6 +135,7 @@ const resources = [
 const quizQuestions = [
   {
     question: "Hva brukes HTML til?",
+    topic: "HTML, CSS og JavaScript",
     choices: [
       "Å strukturere innhold på en nettside",
       "Å lagre data i en database",
@@ -110,6 +146,7 @@ const quizQuestions = [
   },
   {
     question: "Hva gjør CSS?",
+    topic: "HTML, CSS og JavaScript",
     choices: [
       "Lagrer nettsidens filer på en server",
       "Bestemmer hvordan nettsiden ser ut",
@@ -120,6 +157,7 @@ const quizQuestions = [
   },
   {
     question: "Hva hjelper Git deg med?",
+    topic: "Programmering og Git",
     choices: [
       "Å skrive HTML raskere",
       "Å lage bilder til nettsiden",
@@ -130,6 +168,7 @@ const quizQuestions = [
   },
   {
     question: "Hva er en database først og fremst til for?",
+    topic: "Databaser",
     choices: [
       "Å lagre og finne igjen informasjon",
       "Å justere fargene på en nettside",
@@ -140,6 +179,7 @@ const quizQuestions = [
   },
   {
     question: "Hva bør alternativteksten til et bilde gjøre?",
+    topic: "Mediekommunikasjon",
     choices: [
       "Gjenta filnavnet til bildet",
       "Beskrive viktig informasjon i bildet",
@@ -170,6 +210,11 @@ function App() {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [testComplete, setTestComplete] = useState(false);
+  const [missedTopics, setMissedTopics] = useState<string[]>([]);
+  const [recommendedTasks, setRecommendedTasks] = useState<
+    (typeof tasks)[number][]
+  >([]);
+  const [recommendationMessage, setRecommendationMessage] = useState("");
   const [points, setPoints] = useState(120);
   const [purchased, setPurchased] = useState(false);
 
@@ -196,6 +241,7 @@ function App() {
     setQuestionIndex(0);
     setCorrectAnswers(0);
     setTestComplete(false);
+    setMissedTopics([]);
     setAnswer(null);
     setDialog("test");
   };
@@ -205,12 +251,28 @@ function App() {
     if (index === currentQuestion.correctIndex) {
       setPoints((current) => current + 10);
       setCorrectAnswers((current) => current + 1);
+    } else {
+      setMissedTopics((current) => [...current, currentQuestion.topic]);
     }
     setAnswer(choice);
   };
 
   const nextQuestion = () => {
     if (questionIndex === quizQuestions.length - 1) {
+      const practiceTopics = [...new Set(missedTopics)];
+      const matchedTasks = practiceTopics
+        .map((topic) => tasks.find((task) => task.topic === topic))
+        .filter((task): task is (typeof tasks)[number] => task !== undefined);
+      const nextRecommendations = matchedTasks.length
+        ? matchedTasks
+        : tasks.filter((task) => task.topic === "Server og tjenester");
+
+      setRecommendedTasks(nextRecommendations);
+      setRecommendationMessage(
+        matchedTasks.length
+          ? "Nova har funnet oppgaver i temaene du kan øve litt mer på."
+          : "Full pott! Nova foreslår et nytt tema du kan utforske videre.",
+      );
       setTestComplete(true);
       return;
     }
@@ -219,12 +281,24 @@ function App() {
   };
 
   const closeDialog = () => {
+    if (dialog === "test" && testComplete) setView("home");
     setDialog(null);
     setSelectedTask(null);
     setSelectedResource(null);
     setAnswer(null);
     setTestComplete(false);
   };
+
+  const openTask = (task: (typeof tasks)[number]) => {
+    setView("home");
+    setDialog(null);
+    setSelectedTask(task);
+  };
+
+  const recommendationReason = (task: (typeof tasks)[number]) =>
+    missedTopics.includes(task.topic)
+      ? `Kartleggingen viser at du kan øve mer på ${task.topic.toLowerCase()}.`
+      : `Et nytt tema å utforske etter den gode innsatsen din.`;
 
   return (
     <div className="app-shell">
@@ -257,7 +331,7 @@ function App() {
 
           <div className="nav-section">
             <p className="nav-heading">
-              Temaer <span className="nav-count">05</span>
+              Temaer <span className="nav-count">{String(topics.length).padStart(2, "0")}</span>
             </p>
             {topics.map(({ label, icon: Icon, color }) => (
               <button
@@ -336,7 +410,7 @@ function App() {
             </button>
             <button className="profile-button" aria-label="Elevprofil">
               <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=96&h=96&q=80"
+                src={novaImage}
                 alt=""
               />
               <span>Nova</span>
@@ -391,7 +465,7 @@ function App() {
                   </span>
                   <img
                     className="hero-avatar"
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=360&h=360&q=85"
+                    src={novaImage}
                     alt="Nova, læringsguiden din"
                   />
                   <span className="avatar-status">
@@ -401,12 +475,14 @@ function App() {
                 <div className="hero-copy">
                   <span className="hero-label">HEI, NOVA</span>
                   <h2>
-                    Du er bare én oppgave
-                    <br />
-                    unna en ny streak.
+                    {recommendedTasks.length
+                      ? "Jeg har funnet noe for deg!"
+                      : "Hei, jeg er Nova."}
                   </h2>
                   <p>
-                    Velg en løype, test det du kan, og samle poeng underveis.
+                    {recommendedTasks.length
+                      ? recommendationMessage
+                      : "Jeg viser deg oppgaver og ressurser som hjelper deg å bli tryggere i IT og medier."}
                   </p>
                 </div>
                 <div className="hero-actions">
@@ -425,14 +501,26 @@ function App() {
                   </button>
                   <button
                     className="action-card tasks-card"
-                    onClick={() => showTasks()}
+                    onClick={() =>
+                      recommendedTasks.length
+                        ? openTask(recommendedTasks[0])
+                        : showTasks()
+                    }
                   >
                     <span className="action-icon">
                       <Play size={19} fill="currentColor" />
                     </span>
                     <span className="action-text">
-                      <small>VELG BLANT {tasks.length} OPPGAVER</small>
-                      <strong>Direkte til oppgavene</strong>
+                      <small>
+                        {recommendedTasks.length
+                          ? "NOVAS ANBEFALING"
+                          : `VELG BLANT ${tasks.length} OPPGAVER`}
+                      </small>
+                      <strong>
+                        {recommendedTasks.length
+                          ? "Start med dette forslaget"
+                          : "Se alle oppgavene"}
+                      </strong>
                     </span>
                     <ArrowUpRight className="action-arrow" size={18} />
                   </button>
@@ -447,6 +535,41 @@ function App() {
                 </span>
               </div>
             </div>
+
+            {recommendedTasks.length > 0 && (
+              <section className="recommendation-section" aria-labelledby="recommendations-title">
+                <div className="recommendation-heading">
+                  <img src={novaImage} alt="" />
+                  <div>
+                    <p className="eyebrow">NOVA ANBEFALER</p>
+                    <h2 id="recommendations-title">Oppgaver som passer for deg</h2>
+                    <p>{recommendationMessage}</p>
+                  </div>
+                </div>
+                <div className="recommendation-list">
+                  {recommendedTasks.map((task) => {
+                    const Icon = task.icon;
+                    return (
+                      <button
+                        className="recommendation-card"
+                        key={task.title}
+                        onClick={() => openTask(task)}
+                      >
+                        <span className={`task-icon ${task.color}`}>
+                          <Icon size={20} />
+                        </span>
+                        <span className="recommendation-card-copy">
+                          <small>{task.topic}</small>
+                          <strong>{task.title}</strong>
+                          <span>{recommendationReason(task)}</span>
+                        </span>
+                        <ArrowUpRight size={17} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             <div className="below-grid">
               <section className="continue-section">
@@ -708,6 +831,28 @@ function App() {
                   <p className="modal-lead">
                     Du fikk {correctAnswers} av {quizQuestions.length} riktige og samlet {correctAnswers * 10} poeng.
                   </p>
+                  <div className="result-recommendations">
+                    <strong>{recommendationMessage}</strong>
+                    {recommendedTasks.map((task) => {
+                      const Icon = task.icon;
+                      return (
+                        <button
+                          className="result-recommendation"
+                          key={task.title}
+                          onClick={() => openTask(task)}
+                        >
+                          <span className={`task-icon ${task.color}`}>
+                            <Icon size={17} />
+                          </span>
+                          <span>
+                            <small>{task.topic}</small>
+                            <b>{task.title}</b>
+                          </span>
+                          <ChevronRight size={16} />
+                        </button>
+                      );
+                    })}
+                  </div>
                   <button className="primary-button" onClick={closeDialog}>
                     Tilbake til oversikten <Check size={16} />
                   </button>
