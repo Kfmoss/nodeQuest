@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowDownRight,
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   Braces,
   Check,
   ChevronRight,
+  Clock3,
   CircleHelp,
   Code2,
   Database,
@@ -26,7 +27,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import novaImage from "./assets/Nova.png";
+import novaImage from "./assets/novax.png";
 import "./App.css";
 
 const topics = [
@@ -132,10 +133,34 @@ const resources = [
   },
 ];
 
-const quizQuestions = [
+const MAX_TASK_TIME_MINUTES = 10;
+const MAX_TASK_TIME_SECONDS = MAX_TASK_TIME_MINUTES * 60;
+const MAX_TASK_POINTS = 10;
+
+type ChoiceQuestion = {
+  question: string;
+  topic: string;
+  answerType: "choice";
+  choices: string[];
+  correctIndex: number;
+  explanation: string;
+};
+
+type TextQuestion = {
+  question: string;
+  topic: string;
+  answerType: "text";
+  acceptedAnswers: string[];
+  explanation: string;
+};
+
+type QuizQuestion = ChoiceQuestion | TextQuestion;
+
+const quizQuestions: QuizQuestion[] = [
   {
     question: "Hva brukes HTML til?",
     topic: "HTML, CSS og JavaScript",
+    answerType: "choice",
     choices: [
       "Å strukturere innhold på en nettside",
       "Å lagre data i en database",
@@ -147,6 +172,7 @@ const quizQuestions = [
   {
     question: "Hva gjør CSS?",
     topic: "HTML, CSS og JavaScript",
+    answerType: "choice",
     choices: [
       "Lagrer nettsidens filer på en server",
       "Bestemmer hvordan nettsiden ser ut",
@@ -156,19 +182,16 @@ const quizQuestions = [
     explanation: "CSS brukes til å style og plassere innhold på nettsiden.",
   },
   {
-    question: "Hva hjelper Git deg med?",
+    question: "Hva heter verktøyet som brukes til å holde oversikt over endringer i kode?",
     topic: "Programmering og Git",
-    choices: [
-      "Å skrive HTML raskere",
-      "Å lage bilder til nettsiden",
-      "Å holde oversikt over endringer i kode",
-    ],
-    correctIndex: 2,
+    answerType: "text",
+    acceptedAnswers: ["git", "git versjonskontroll"],
     explanation: "Git lagrer versjonshistorikken til prosjektet ditt.",
   },
   {
     question: "Hva er en database først og fremst til for?",
     topic: "Databaser",
+    answerType: "choice",
     choices: [
       "Å lagre og finne igjen informasjon",
       "Å justere fargene på en nettside",
@@ -180,6 +203,7 @@ const quizQuestions = [
   {
     question: "Hva bør alternativteksten til et bilde gjøre?",
     topic: "Mediekommunikasjon",
+    answerType: "choice",
     choices: [
       "Gjenta filnavnet til bildet",
       "Beskrive viktig informasjon i bildet",
@@ -207,6 +231,13 @@ function App() {
     (typeof resources)[number] | null
   >(null);
   const [answer, setAnswer] = useState<string | null>(null);
+  const [draftAnswer, setDraftAnswer] = useState("");
+  const [answerWasCorrect, setAnswerWasCorrect] = useState<boolean | null>(null);
+  const [earnedPoints, setEarnedPoints] = useState(0);
+  const [quizPoints, setQuizPoints] = useState(0);
+  const [remainingSeconds, setRemainingSeconds] = useState(MAX_TASK_TIME_SECONDS);
+  const [timeExpired, setTimeExpired] = useState(false);
+  const questionDeadline = useRef<number | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [testComplete, setTestComplete] = useState(false);
@@ -233,8 +264,40 @@ function App() {
       ? resources
       : resources.filter((resource) => resource.topic === selectedTopic);
   const currentQuestion = quizQuestions[questionIndex];
-  const correctAnswer = currentQuestion.choices[currentQuestion.correctIndex];
-  const isCorrectAnswer = answer === correctAnswer;
+  const isCorrectAnswer = answerWasCorrect === true;
+  const formattedTime = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
+
+  useEffect(() => {
+    if (
+      dialog !== "test" ||
+      testComplete ||
+      answer !== null ||
+      timeExpired
+    ) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      const deadline = questionDeadline.current;
+      if (deadline === null) return;
+
+      const secondsLeft = Math.max(
+        0,
+        Math.ceil((deadline - Date.now()) / 1000),
+      );
+      setRemainingSeconds(secondsLeft);
+
+      if (secondsLeft === 0) {
+        questionDeadline.current = null;
+        setTimeExpired(true);
+        setAnswerWasCorrect(false);
+        setEarnedPoints(0);
+        setMissedTopics((current) => [...current, currentQuestion.topic]);
+      }
+    }, 250);
+
+    return () => window.clearInterval(timer);
+  }, [answer, currentQuestion.topic, dialog, testComplete, timeExpired]);
 
   const startTest = () => {
     setView("test");
@@ -243,18 +306,50 @@ function App() {
     setTestComplete(false);
     setMissedTopics([]);
     setAnswer(null);
+    setDraftAnswer("");
+    setAnswerWasCorrect(null);
+    setEarnedPoints(0);
+    setQuizPoints(0);
+    setRemainingSeconds(MAX_TASK_TIME_SECONDS);
+    setTimeExpired(false);
+    questionDeadline.current = Date.now() + MAX_TASK_TIME_SECONDS * 1000;
     setDialog("test");
   };
 
-  const chooseAnswer = (choice: string, index: number) => {
-    if (answer !== null) return;
-    if (index === currentQuestion.correctIndex) {
-      setPoints((current) => current + 10);
+  const chooseAnswer = (response: string, isCorrect: boolean) => {
+    if (answer !== null || timeExpired || questionDeadline.current === null)
+      return;
+
+    const secondsLeft = Math.max(
+      0,
+      Math.ceil((questionDeadline.current - Date.now()) / 1000),
+    );
+    if (secondsLeft === 0) {
+      setRemainingSeconds(0);
+      setTimeExpired(true);
+      setAnswerWasCorrect(false);
+      setEarnedPoints(0);
+      setMissedTopics((current) => [...current, currentQuestion.topic]);
+      questionDeadline.current = null;
+      return;
+    }
+
+    questionDeadline.current = null;
+    setRemainingSeconds(secondsLeft);
+    setAnswerWasCorrect(isCorrect);
+    const score = isCorrect
+      ? Math.ceil((MAX_TASK_POINTS * secondsLeft) / MAX_TASK_TIME_SECONDS)
+      : 0;
+    setEarnedPoints(score);
+
+    if (isCorrect) {
       setCorrectAnswers((current) => current + 1);
+      setQuizPoints((current) => current + score);
+      setPoints((current) => current + score);
     } else {
       setMissedTopics((current) => [...current, currentQuestion.topic]);
     }
-    setAnswer(choice);
+    setAnswer(response);
   };
 
   const nextQuestion = () => {
@@ -278,6 +373,12 @@ function App() {
     }
     setQuestionIndex((current) => current + 1);
     setAnswer(null);
+    setDraftAnswer("");
+    setAnswerWasCorrect(null);
+    setEarnedPoints(0);
+    setRemainingSeconds(MAX_TASK_TIME_SECONDS);
+    setTimeExpired(false);
+    questionDeadline.current = Date.now() + MAX_TASK_TIME_SECONDS * 1000;
   };
 
   const closeDialog = () => {
@@ -287,6 +388,7 @@ function App() {
     setSelectedResource(null);
     setAnswer(null);
     setTestComplete(false);
+    questionDeadline.current = null;
   };
 
   const openTask = (task: (typeof tasks)[number]) => {
@@ -559,7 +661,7 @@ function App() {
                           <Icon size={20} />
                         </span>
                         <span className="recommendation-card-copy">
-                          <small>{task.topic}</small>
+                          <small>{task.topic} · Maks. {MAX_TASK_TIME_MINUTES} min</small>
                           <strong>{task.title}</strong>
                           <span>{recommendationReason(task)}</span>
                         </span>
@@ -593,13 +695,13 @@ function App() {
                     <strong>Bygg din første nettside</strong>
                     <small>
                       <span>HTML, CSS og JavaScript</span>
-                      <i /> 10 min
+                      <i /> Maks. {MAX_TASK_TIME_MINUTES} min
                     </small>
                     <span className="progress-track">
                       <i />
                     </span>
                   </span>
-                  <span className="continue-xp">+25 XP</span>
+                  <span className="continue-xp">Maks. {MAX_TASK_POINTS} poeng</span>
                   <ChevronRight size={17} />
                 </button>
               </section>
@@ -684,8 +786,6 @@ function App() {
                     topic,
                     description,
                     level,
-                    minutes,
-                    xp,
                     icon: Icon,
                     color,
                   }) => (
@@ -694,7 +794,7 @@ function App() {
                         <span className={`task-icon ${color}`}>
                           <Icon size={21} />
                         </span>
-                        <span className="task-xp">+{xp} XP</span>
+                        <span className="task-xp">Maks. {MAX_TASK_POINTS} poeng</span>
                       </div>
                       <p className="task-topic">{topic}</p>
                       <h2>{title}</h2>
@@ -702,7 +802,7 @@ function App() {
                       <div className="task-meta">
                         <span>{level}</span>
                         <i />
-                        <span>{minutes} min</span>
+                        <span>Maks. tid: {MAX_TASK_TIME_MINUTES} min</span>
                       </div>
                       <button
                         className="task-open"
@@ -829,7 +929,7 @@ function App() {
                   <p className="eyebrow">LÆRLINGETEST · FULLFØRT</p>
                   <h2 id="modal-title">Bra jobba!</h2>
                   <p className="modal-lead">
-                    Du fikk {correctAnswers} av {quizQuestions.length} riktige og samlet {correctAnswers * 10} poeng.
+                    Du fikk {correctAnswers} av {quizQuestions.length} riktige og samlet {quizPoints} poeng.
                   </p>
                   <div className="result-recommendations">
                     <strong>{recommendationMessage}</strong>
@@ -845,7 +945,7 @@ function App() {
                             <Icon size={17} />
                           </span>
                           <span>
-                            <small>{task.topic}</small>
+                            <small>{task.topic} · Maks. {MAX_TASK_TIME_MINUTES} min</small>
                             <b>{task.title}</b>
                           </span>
                           <ChevronRight size={16} />
@@ -862,43 +962,78 @@ function App() {
                 <span className="modal-icon test-modal-icon">
                   <CircleHelp size={22} />
                 </span>
-                <p className="eyebrow">LÆRLINGETEST · SPØRSMÅL {questionIndex + 1} AV {quizQuestions.length}</p>
-                <h2 id="modal-title">{currentQuestion.question}</h2>
+                <p className="eyebrow">OPPGAVE {questionIndex + 1} AV {quizQuestions.length}</p>
+                <h2 className="question-title" id="modal-title">{currentQuestion.question}</h2>
                 <p className="modal-lead">
-                  Velg det alternativet du mener er riktig.
+                  Velg riktig svar eller skriv inn svaret ditt. Feil svar gir 0 poeng.
                 </p>
-                <div className="answer-list">
-                  {currentQuestion.choices.map((choice, index) => (
-                    <button
-                      className={`answer-option ${answer === choice ? (index === currentQuestion.correctIndex ? "is-correct" : "is-wrong") : ""}`}
-                      disabled={answer !== null}
-                      key={choice}
-                      onClick={() => chooseAnswer(choice, index)}
-                    >
-                      <span className="answer-letter">
-                        {String.fromCharCode(65 + index)}
-                      </span>
-                      {choice}
-                      {answer === choice &&
-                        (index === currentQuestion.correctIndex ? <Check size={17} /> : <X size={17} />)}
-                    </button>
-                  ))}
+                <div className={`question-timer ${remainingSeconds <= 60 ? "is-warning" : ""}`}>
+                  <div className="timer-label"><span><Clock3 size={18} /> Maks. tid for poeng</span><strong>{formattedTime}</strong></div>
+                  <div className="timer-track" role="progressbar" aria-label="Tid igjen" aria-valuemin={0} aria-valuemax={MAX_TASK_TIME_SECONDS} aria-valuenow={remainingSeconds}>
+                    <span style={{ width: `${(remainingSeconds / MAX_TASK_TIME_SECONDS) * 100}%` }} />
+                  </div>
+                  <span className="timer-hint">Riktig svar gir opptil {MAX_TASK_POINTS} poeng, avhengig av tiden du bruker.</span>
                 </div>
-                {answer && (
+                {currentQuestion.answerType === "choice" ? (
+                  <div className="answer-list">
+                    {currentQuestion.choices.map((choice, index) => (
+                      <button
+                        className={`answer-option ${answer === choice ? (index === currentQuestion.correctIndex ? "is-correct" : "is-wrong") : ""}`}
+                        disabled={answer !== null || timeExpired}
+                        key={choice}
+                        onClick={() => chooseAnswer(choice, index === currentQuestion.correctIndex)}
+                      >
+                        <span className="answer-letter">
+                          {String.fromCharCode(65 + index)}
+                        </span>
+                        {choice}
+                        {answer === choice &&
+                          (index === currentQuestion.correctIndex ? <Check size={18} /> : <X size={18} />)}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <form className="text-answer-form" onSubmit={(event) => {
+                    event.preventDefault();
+                    const response = draftAnswer.trim();
+                    if (!response) return;
+                    const isCorrect = currentQuestion.acceptedAnswers.some(
+                      (accepted) => accepted.localeCompare(response, "nb-NO", { sensitivity: "base" }) === 0,
+                    );
+                    chooseAnswer(response, isCorrect);
+                  }}>
+                    <label htmlFor="written-answer">Skriv svaret</label>
+                    <input
+                      id="written-answer"
+                      autoComplete="off"
+                      value={draftAnswer}
+                      onChange={(event) => setDraftAnswer(event.target.value)}
+                      disabled={answer !== null || timeExpired}
+                      placeholder="Skriv svaret ditt her"
+                    />
+                    <button className="primary-button" type="submit" disabled={!draftAnswer.trim() || answer !== null || timeExpired}>
+                      Svar <Check size={18} />
+                    </button>
+                  </form>
+                )}
+                {(answer !== null || timeExpired) && (
                   <p
                     className={`answer-feedback ${isCorrectAnswer ? "correct" : ""}`}
+                    role="status"
                   >
-                    {isCorrectAnswer
-                      ? `Helt riktig! ${currentQuestion.explanation} +10 poeng`
-                      : `Ikke helt. ${currentQuestion.explanation}`}
+                    {timeExpired
+                      ? `Tiden er ute. Du får 0 poeng. ${currentQuestion.explanation}`
+                      : isCorrectAnswer
+                        ? `Helt riktig! ${currentQuestion.explanation} Du får ${earnedPoints} poeng.`
+                        : `Feil svar. Du får 0 poeng. ${currentQuestion.explanation}`}
                   </p>
                 )}
-                {answer && (
+                {(answer !== null || timeExpired) && (
                   <div className="quiz-next">
-                    <span>{correctAnswers} av {questionIndex + 1} riktige</span>
+                    <span>{correctAnswers} riktige · {quizPoints} poeng</span>
                     <button className="primary-button" onClick={nextQuestion}>
-                      {questionIndex === quizQuestions.length - 1 ? "Se resultat" : "Neste spørsmål"}
-                      <ChevronRight size={16} />
+                      {questionIndex === quizQuestions.length - 1 ? "Se resultat" : "Til neste oppgave"}
+                      <ChevronRight size={18} />
                     </button>
                   </div>
                 )}
@@ -948,8 +1083,7 @@ function App() {
                   <selectedTask.icon size={21} />
                 </span>
                 <p className="eyebrow">
-                  {selectedTask.topic.toUpperCase()} · {selectedTask.minutes}{" "}
-                  MIN
+                  {selectedTask.topic.toUpperCase()} · MAKS. TID {MAX_TASK_TIME_MINUTES} MIN
                 </p>
                 <h2 id="modal-title">{selectedTask.title}</h2>
                 <p className="modal-lead">{selectedTask.description}</p>
@@ -965,7 +1099,7 @@ function App() {
                 </div>
                 <div className="modal-footer">
                   <span>
-                    Belønning <strong>+{selectedTask.xp} XP</strong>
+                    Poeng ved riktig svar <strong>inntil {MAX_TASK_POINTS} poeng</strong>
                   </span>
                   <button className="primary-button" onClick={closeDialog}>
                     Klart <Check size={16} />
