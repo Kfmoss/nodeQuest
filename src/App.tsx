@@ -244,6 +244,7 @@ function App() {
     day: "numeric",
     month: "long",
   }).format(new Date());
+  const [studentName, setStudentName] = useState("");
   const [view, setView] = useState("home");
   const [selectedTopic, setSelectedTopic] = useState("Alle oppgaver");
   const [catalogTab, setCatalogTab] = useState<"tasks" | "resources">("tasks");
@@ -460,6 +461,52 @@ function App() {
       ? `Kartleggingen viser at du kan øve mer på ${task.topic.toLowerCase()}.`
       : `Et nytt tema å utforske etter den gode innsatsen din.`;
 
+  if (!studentName) {
+    return (
+      <main className="student-gate">
+        <section className="student-gate-panel" aria-labelledby="student-gate-title">
+          <a className="brand student-gate-brand" href="#start" aria-label="nodeQuest">
+            <span className="brand-mark">
+              <img src={appLogo} alt="" />
+            </span>
+            <span>
+              node<span>Quest</span>
+            </span>
+          </a>
+          <p className="eyebrow">
+            <span className="eyebrow-line" /> KLAR FOR Å STARTE?
+          </p>
+          <h1 id="student-gate-title">SKRIV INN NAVNET DITT</h1>
+          <p className="student-gate-copy">
+            Så gjør vi læringsløypa klar for deg.
+          </p>
+          <form
+            className="student-name-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+              const name = String(formData.get("student-name") ?? "").trim();
+              if (name) setStudentName(name);
+            }}
+          >
+            <label htmlFor="student-name">ELEVENS NAVN</label>
+            <input
+              autoFocus
+              autoComplete="name"
+              id="student-name"
+              name="student-name"
+              placeholder="NAVNET DITT"
+              required
+            />
+            <button className="primary-button" type="submit">
+              Start læringsløypa <ChevronRight size={18} />
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -540,16 +587,6 @@ function App() {
           </div>
         </div>
 
-        <div className="sidebar-footer">
-          <div className="streak-icon">
-            <Sparkles size={18} />
-          </div>
-          <div>
-            <strong>Fin flyt!</strong>
-            <span>Du har øvd 3 dager på rad</span>
-          </div>
-          <ArrowUpRight size={16} />
-        </div>
       </aside>
 
       <main id="hjem" className="main-area">
@@ -586,7 +623,7 @@ function App() {
                 src={novaImage}
                 alt=""
               />
-              <span>Nova</span>
+              <span>{studentName}</span>
               <ChevronRight size={13} />
             </button>
           </div>
@@ -602,7 +639,7 @@ function App() {
                 <h1>
                   Klar for neste nivå,
                   <br />
-                  <span>Nova?</span>
+                  <span>{studentName}?</span>
                 </h1>
                 <p className="welcome-copy">
                   Små steg bygger stor kompetanse. Hva har du lyst til å
