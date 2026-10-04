@@ -536,7 +536,49 @@ function App() {
             </button>
           </div>
 
-          <div className="nav-section">
+          <div className="nav-section mobile-nav-section">
+            <button
+              className={`mobile-nav-item ${view === "test" ? "is-active" : ""}`}
+              onClick={startTest}
+            >
+              <span className="nav-icon lilac">
+                <GraduationCap size={16} />
+              </span>
+              <span>Ta en kartleggingstest</span>
+            </button>
+            <button
+              className={`mobile-nav-item ${view === "tasks" && selectedTopic === "Alle oppgaver" ? "is-active" : ""}`}
+              onClick={() => showTasks()}
+            >
+              <span className="nav-icon yellow">
+                <Zap size={16} />
+              </span>
+              <span>Alle oppgaver</span>
+            </button>
+            {topics.map(({ label, icon: Icon, color }) => (
+              <button
+                className={`mobile-nav-item ${view === "tasks" && selectedTopic === label ? "is-active" : ""}`}
+                key={label}
+                onClick={() => showTasks(label)}
+              >
+                <span className={`nav-icon ${color}`}>
+                  <Icon size={16} />
+                </span>
+                <span>{label}</span>
+              </button>
+            ))}
+            <button
+              className={`mobile-nav-item ${view === "nova" ? "is-active" : ""}`}
+              onClick={() => setView("nova")}
+            >
+              <span className="nav-icon mint">
+                <Sparkles size={16} />
+              </span>
+              <span>Nova</span>
+            </button>
+          </div>
+
+          <div className="nav-section desktop-nav-section">
             <p className="nav-heading">
               Temaer <span className="nav-count">{String(topics.length).padStart(2, "0")}</span>
             </p>
@@ -555,7 +597,7 @@ function App() {
             ))}
           </div>
 
-          <div className="nav-section">
+          <div className="nav-section desktop-nav-section">
             <p className="nav-heading">Tren på</p>
             <button
               className={`nav-item ${view === "test" ? "is-active" : ""}`}
@@ -564,7 +606,7 @@ function App() {
               <span className="nav-icon lilac">
                 <GraduationCap size={15} />
               </span>
-              <span>Lærlingetest</span>
+              <span>Kartleggingstest</span>
             </button>
             <button
               className={`nav-item ${view === "tasks" && selectedTopic === "Alle oppgaver" ? "is-active" : ""}`}
@@ -602,7 +644,7 @@ function App() {
                   : view === "nova"
                     ? "Om Nova"
                     : view === "test"
-                      ? "Lærlingetest"
+                      ? "Kartleggingstest"
                       : "Min læringsside"}
             </strong>
           </div>
@@ -705,7 +747,7 @@ function App() {
                     </span>
                     <span className="action-text">
                       <small>FINN UT HVA DU KAN</small>
-                      <strong>Ta en lærlingetest</strong>
+                      <strong>Ta en kartleggingstest</strong>
                     </span>
                     <ArrowUpRight className="action-arrow" size={18} />
                   </button>
@@ -1124,7 +1166,7 @@ function App() {
                 <GraduationCap size={24} />
               </span>
               <p className="eyebrow">KARTLEGG KOMPETANSEN DIN</p>
-              <h1>Lærlingetest</h1>
+              <h1>Kartleggingstest</h1>
               <p>
                 En liten smakebit på fagstoffet. Svar på spørsmålet og se hva du
                 kan.
