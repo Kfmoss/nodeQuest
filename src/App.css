@@ -289,9 +289,9 @@
   .points-pill strong { font-size: 11px; }
   .shop-button { gap: 5px; padding: 8px; font-size: 0; }
   .shop-button svg { width: 17px; height: 17px; }
-  .profile-button { gap: 0; }
-  .profile-button img { width: 27px; height: 27px; }
-  .profile-button span, .profile-button > svg { display: none; }
+  .profile-button { max-width: 110px; gap: 0; }
+  .profile-button span { max-width: 96px; display: block; overflow: hidden; color: #4b5060; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+  .profile-button img, .profile-button > svg { display: none; }
   .dashboard, .catalog-page { padding: 22px 14px 17px; }
   .welcome-row { align-items: flex-start; flex-direction: column; gap: 13px; margin-bottom: 16px; }
   .welcome-row h1 { font-size: 25px; }
@@ -493,6 +493,29 @@
 .moto-buy-button { min-width: 110px; min-height: 42px; padding: 8px 12px; border: 0; border-radius: 5px; color: white; background: #526bc5; font-size: 13px; font-weight: 700; transition: background 140ms ease, opacity 140ms ease; }
 .moto-buy-button:hover:not(:disabled) { background: #3e57ae; }
 .moto-buy-button:disabled { cursor: not-allowed; color: #666f81; background: #e9ebf0; }
+.profile-heading { margin-bottom: 20px; }
+.profile-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 28px; }
+.profile-stat { display: grid; gap: 7px; padding: 15px 17px; border: 1px solid #e5e7ec; border-radius: 7px; background: #fff; }
+.profile-stat > span { color: #737b8e; font-size: 10px; font-weight: 700; letter-spacing: .7px; }
+.profile-stat > strong { color: #2b3349; font: 600 25px/1.2 var(--display); }
+.profile-section { margin-top: 24px; }
+.profile-section .section-title { margin-bottom: 12px; }
+.profile-list { display: grid; gap: 8px; }
+.profile-list-item { min-width: 0; display: flex; align-items: center; gap: 12px; padding: 13px 15px; border: 1px solid #e5e7ec; border-radius: 6px; background: #fff; }
+.profile-list-icon { width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; border-radius: 7px; }
+.test-history-icon { color: #596ac1; background: #e9eaff; }
+.theme-purchase-icon { color: #8660bb; background: #f0e9ff; }
+.profile-list-copy { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.profile-list-copy > strong { color: #30374b; font-size: 14px; }
+.profile-list-copy > small { color: #737b8e; font-size: 12px; line-height: 1.5; }
+.profile-list-result { min-width: 110px; display: grid; gap: 3px; text-align: right; }
+.profile-list-result > strong { color: #30374b; font-size: 13px; }
+.profile-list-result > small { color: #4a917b; font-size: 12px; font-weight: 700; }
+.profile-result-badge { padding: 5px 8px; border-radius: 4px; color: #8b6530; background: #fff2d9; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.profile-result-badge.is-passed { color: #28795e; background: #e5f5ed; }
+.profile-purchase-image { width: 66px; height: 50px; flex: 0 0 66px; border-radius: 5px; background: #f3f4f7; object-fit: contain; }
+.profile-purchase-price { color: #4a917b; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.profile-empty { margin: 0; padding: 18px 15px; border: 1px solid #e5e7ec; border-radius: 6px; color: #737b8e; background: #fff; font-size: 14px; }
 
 @media (max-width: 900px) {
   .nova-interest-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -526,4 +549,15 @@
   .moto-grid { grid-template-columns: 1fr; gap: 12px; }
   .moto-image { aspect-ratio: 1.65; }
   .moto-description { min-height: 0; }
+  .profile-stats { gap: 7px; }
+  .profile-stat { gap: 5px; padding: 11px 9px; }
+  .profile-stat > span { font-size: 8px; letter-spacing: .35px; line-height: 1.4; }
+  .profile-stat > strong { font-size: 21px; }
+  .profile-list-item { flex-wrap: wrap; gap: 9px; padding: 11px; }
+  .profile-list-copy { flex-basis: calc(100% - 60px); }
+  .profile-list-copy > small { font-size: 11px; }
+  .profile-list-result { min-width: 0; margin-left: 51px; text-align: left; }
+  .profile-result-badge { margin-left: auto; }
+  .profile-purchase-image { width: 52px; height: 44px; flex-basis: 52px; }
+  .profile-purchase-price { margin-left: 61px; font-size: 11px; }
 }

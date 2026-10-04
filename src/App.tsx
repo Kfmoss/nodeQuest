@@ -175,6 +175,25 @@ type TextQuestion = {
 
 type QuizQuestion = ChoiceQuestion | TextQuestion;
 
+type AssessmentAttempt = {
+  id: number;
+  completedAt: string;
+  correctAnswers: number;
+  points: number;
+  passed: boolean;
+};
+
+type SavedStudentProgress = {
+  points: number;
+  totalPointsEarned: number;
+  assessmentHistory: AssessmentAttempt[];
+  ownedMotorcycles: string[];
+  playerLevel: number;
+  bestAssessmentScore: number;
+  assessmentPassed: boolean;
+  purchased: boolean;
+};
+
 const quizQuestions: QuizQuestion[] = [
   {
     question: "Hva brukes HTML til?",
@@ -273,11 +292,45 @@ function App() {
   >([]);
   const [recommendationMessage, setRecommendationMessage] = useState("");
   const [points, setPoints] = useState(0);
+  const [totalPointsEarned, setTotalPointsEarned] = useState(0);
+  const [assessmentHistory, setAssessmentHistory] = useState<AssessmentAttempt[]>([]);
   const [ownedMotorcycles, setOwnedMotorcycles] = useState<string[]>([]);
   const [playerLevel, setPlayerLevel] = useState(1);
   const [bestAssessmentScore, setBestAssessmentScore] = useState(0);
   const [assessmentPassed, setAssessmentPassed] = useState(false);
   const [purchased, setPurchased] = useState(false);
+
+  useEffect(() => {
+    if (!studentName) return;
+
+    const storageKey = `nodequest:profile:${studentName.toLocaleLowerCase("nb-NO")}`;
+    const progress: SavedStudentProgress = {
+      points,
+      totalPointsEarned,
+      assessmentHistory,
+      ownedMotorcycles,
+      playerLevel,
+      bestAssessmentScore,
+      assessmentPassed,
+      purchased,
+    };
+
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(progress));
+    } catch {
+      return;
+    }
+  }, [
+    assessmentHistory,
+    assessmentPassed,
+    bestAssessmentScore,
+    ownedMotorcycles,
+    playerLevel,
+    points,
+    purchased,
+    studentName,
+    totalPointsEarned,
+  ]);
 
   const showTasks = (topic = "Alle oppgaver") => {
     setSelectedTopic(topic);
@@ -402,6 +455,7 @@ function App() {
       setCorrectAnswers((current) => current + 1);
       setQuizPoints((current) => current + score);
       setPoints((current) => current + score);
+      setTotalPointsEarned((current) => current + score);
     } else {
       setMissedTopics((current) => [...current, currentQuestion.topic]);
     }
@@ -427,6 +481,16 @@ function App() {
       );
       setBestAssessmentScore((best) => Math.max(best, correctAnswers));
       setAssessmentPassed(passed);
+      setAssessmentHistory((history) => [
+        ...history,
+        {
+          id: Date.now(),
+          completedAt: new Date().toISOString(),
+          correctAnswers,
+          points: quizPoints,
+          passed,
+        },
+      ]);
       if (passed) setPlayerLevel((level) => Math.max(level, 2));
       setTestComplete(true);
       return;
@@ -487,7 +551,34 @@ function App() {
               event.preventDefault();
               const formData = new FormData(event.currentTarget);
               const name = String(formData.get("student-name") ?? "").trim();
-              if (name) setStudentName(name);
+              if (name) {
+                const storageKey = `nodequest:profile:${name.toLocaleLowerCase("nb-NO")}`;
+                try {
+                  const saved = window.localStorage.getItem(storageKey);
+                  if (saved) {
+                    const progress = JSON.parse(saved) as Partial<SavedStudentProgress>;
+                    setPoints(progress.points ?? 0);
+                    setTotalPointsEarned(progress.totalPointsEarned ?? 0);
+                    setAssessmentHistory(
+                      Array.isArray(progress.assessmentHistory)
+                        ? progress.assessmentHistory
+                        : [],
+                    );
+                    setOwnedMotorcycles(
+                      Array.isArray(progress.ownedMotorcycles)
+                        ? progress.ownedMotorcycles
+                        : [],
+                    );
+                    setPlayerLevel(progress.playerLevel ?? 1);
+                    setBestAssessmentScore(progress.bestAssessmentScore ?? 0);
+                    setAssessmentPassed(progress.assessmentPassed ?? false);
+                    setPurchased(progress.purchased ?? false);
+                  }
+                } catch {
+                  window.localStorage.removeItem(storageKey);
+                }
+                setStudentName(name);
+              }
             }}
           >
             <label htmlFor="student-name">ELEVENS NAVN</label>
@@ -652,6 +743,8 @@ function App() {
                 ? "Oppgaver"
                 : view === "shop"
                   ? "Butikk"
+                  : view === "profile"
+                    ? "Elevprofil"
                   : view === "nova"
                     ? "Om Nova"
                     : view === "test"
@@ -671,13 +764,12 @@ function App() {
             <button className="shop-button" onClick={() => setView("shop")}>
               <ShoppingBag size={16} /> Butikk
             </button>
-            <button className="profile-button" aria-label="Elevprofil">
-              <img
-                src={novaImage}
-                alt=""
-              />
+            <button
+              className="profile-button"
+              aria-label={`Elevprofil for ${studentName}`}
+              onClick={() => setView("profile")}
+            >
               <span>{studentName}</span>
-              <ChevronRight size={13} />
             </button>
           </div>
         </header>
@@ -938,6 +1030,111 @@ function App() {
                 );
               })}
             </div>
+          </section>
+        ) : view === "profile" ? (
+          <section className="catalog-page profile-page">
+            <button className="back-link" onClick={() => setView("home")}>
+              <ArrowLeft size={15} /> Til oversikten
+            </button>
+            <div className="catalog-heading profile-heading">
+              <div>
+                <p className="eyebrow"><span className="eyebrow-line" /> ELEVPROFIL</p>
+                <h1>{studentName}</h1>
+                <p className="welcome-copy">
+                  Oversikt over kartlegginger, opptjente poeng og kjøp.
+                </p>
+              </div>
+            </div>
+
+            <div className="profile-stats" aria-label="Elevens oversikt">
+              <div className="profile-stat">
+                <span>FULLFØRTE TESTER</span>
+                <strong>{assessmentHistory.length}</strong>
+              </div>
+              <div className="profile-stat">
+                <span>POENG OPPTJENT</span>
+                <strong>{totalPointsEarned}</strong>
+              </div>
+              <div className="profile-stat">
+                <span>POENGSALDO</span>
+                <strong>{points}</strong>
+              </div>
+            </div>
+
+            <section className="profile-section" aria-labelledby="profile-tests-title">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">TESTHISTORIKK</p>
+                  <h2 id="profile-tests-title">Kartleggingstester</h2>
+                </div>
+              </div>
+              {assessmentHistory.length ? (
+                <div className="profile-list">
+                  {[...assessmentHistory].reverse().map((attempt) => (
+                    <article className="profile-list-item" key={attempt.id}>
+                      <span className="profile-list-icon test-history-icon">
+                        <GraduationCap size={21} />
+                      </span>
+                      <span className="profile-list-copy">
+                        <strong>Kartleggingstest</strong>
+                        <small>
+                          {new Intl.DateTimeFormat("nb-NO", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          }).format(new Date(attempt.completedAt))}
+                        </small>
+                      </span>
+                      <span className="profile-list-result">
+                        <strong>{attempt.correctAnswers} av {quizQuestions.length} riktige</strong>
+                        <small>{attempt.points} poeng</small>
+                      </span>
+                      <span className={`profile-result-badge ${attempt.passed ? "is-passed" : ""}`}>
+                        {attempt.passed ? "Bestått" : "Øv mer"}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="profile-empty">Ingen kartleggingstester er fullført ennå.</p>
+              )}
+            </section>
+
+            <section className="profile-section" aria-labelledby="profile-purchases-title">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">BUTIKK</p>
+                  <h2 id="profile-purchases-title">Kjøpte varer</h2>
+                </div>
+              </div>
+              {ownedMotorcycles.length || purchased ? (
+                <div className="profile-list">
+                  {motorcycles.filter((motorcycle) => ownedMotorcycles.includes(motorcycle.id)).map((motorcycle) => (
+                    <article className="profile-list-item" key={motorcycle.id}>
+                      <img className="profile-purchase-image" src={motorcycle.image} alt={motorcycle.alt} />
+                      <span className="profile-list-copy">
+                        <strong>{motorcycle.name}</strong>
+                        <small>{motorcycle.style} · {motorcycle.description}</small>
+                      </span>
+                      <span className="profile-purchase-price">Kjøpt for {motorcycle.price} poeng</span>
+                    </article>
+                  ))}
+                  {purchased && (
+                    <article className="profile-list-item" key="stjernehimmel-tema">
+                      <span className="profile-list-icon theme-purchase-icon">
+                        <Sparkles size={21} />
+                      </span>
+                      <span className="profile-list-copy">
+                        <strong>Stjernehimmel-tema</strong>
+                        <small>Profiltema</small>
+                      </span>
+                      <span className="profile-purchase-price">Kjøpt for 80 poeng</span>
+                    </article>
+                  )}
+                </div>
+              ) : (
+                <p className="profile-empty">Ingen varer er kjøpt ennå.</p>
+              )}
+            </section>
           </section>
         ) : view === "nova" ? (
           <section className="nova-page">
