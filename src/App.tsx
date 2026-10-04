@@ -246,6 +246,7 @@ function App() {
   }).format(new Date());
   const [studentName, setStudentName] = useState("");
   const [view, setView] = useState("home");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("Alle oppgaver");
   const [catalogTab, setCatalogTab] = useState<"tasks" | "resources">("tasks");
   const [dialog, setDialog] = useState<"test" | "store" | null>(null);
@@ -524,19 +525,29 @@ function App() {
           </span>
         </a>
 
-        <div className="sidebar-scroll">
+        <div className={`sidebar-scroll ${mobileMenuOpen ? "mobile-menu-open" : ""}`}>
           <div className="nav-section">
             <p className="nav-heading">Læringsløype</p>
             <button
               className={`nav-item ${view === "home" ? "is-active" : ""}`}
-              onClick={() => setView("home")}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
+              onClick={() => {
+                setView("home");
+                setMobileMenuOpen((isOpen) => !isOpen);
+              }}
             >
               <Layers3 size={17} />
               <span>Oversikt</span>
             </button>
           </div>
 
-          <div className="nav-section mobile-nav-section">
+          <div
+            className={`nav-section mobile-nav-section ${mobileMenuOpen ? "is-open" : ""}`}
+            id="mobile-navigation"
+            aria-hidden={!mobileMenuOpen}
+            inert={!mobileMenuOpen}
+          >
             <button
               className={`mobile-nav-item ${view === "test" ? "is-active" : ""}`}
               onClick={startTest}
