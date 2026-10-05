@@ -175,6 +175,13 @@ type TextQuestion = {
 
 type QuizQuestion = ChoiceQuestion | TextQuestion;
 
+type Css1Exercise = {
+  title: string;
+  description: string;
+  instructions?: string[];
+  resources?: { label: string; url: string }[];
+};
+
 type AssessmentAttempt = {
   id: number;
   completedAt: string;
@@ -193,6 +200,142 @@ type SavedStudentProgress = {
   assessmentPassed: boolean;
   purchased: boolean;
 };
+
+const css1Exercises: Css1Exercise[] = [
+  {
+    title: "CSS colors and fonts",
+    description:
+      "Skriv CSS-kode som endrer stylingen på overskriftene h2, h3, h4, h5 og h6. Hver overskrift i HTML-dokumentet forteller hvilken styling den skal ha. Du velger selv styling på h1.",
+    instructions: [
+      "h2: rød tekst.",
+      "h3: blå tekst og skriftstørrelse 30px.",
+      "h4: rosa tekst.",
+      "h5: valgfri tekstfarge og skriftstørrelse 2em.",
+      "h6: gul tekst og skriftstørrelse 3rem.",
+    ],
+  },
+  {
+    title: "Bakgrunner og CSS",
+    description:
+      "En bakgrunn er området bak et element. Den kan være ensfarget, et bilde eller en kombinasjon av begge. Bruk CSS-egenskapen background-color til å endre bakgrunnsfargen på et element eller hele nettsiden.",
+    resources: [
+      {
+        label: "Les om CSS og bakgrunner på W3Schools",
+        url: "https://www.w3schools.com/css/css_background.asp",
+      },
+    ],
+  },
+  {
+    title: "CSS colors, fonts and text",
+    description:
+      "Ta utgangspunkt i HTML-koden fra lenken. Skriv CSS-kode som gir nettsiden resultatet fra oppgavearket.",
+    instructions: [
+      "Bruk background-color, font-family, text-decoration og text-align.",
+      "På overskriften h1 skal du bruke font-family: Papyrus.",
+    ],
+    resources: [
+      {
+        label: "HTML-kode til oppgaven",
+        url: "https://gist.github.com/olec-im-bfk/61cfb97a0317532d00f32cb9b87ff452",
+      },
+      { label: "David Bau Color Tool", url: "http://davidbau.com/colors/" },
+    ],
+  },
+  {
+    title: "CSS Box Model",
+    description:
+      "Gjenskap nettsiden fra oppgavearket ved å bruke prinsippene i CSS Box Model.",
+    instructions: [
+      "Bruk HTML-dokumentet fra lenken som utgangspunkt.",
+      "Skriv all CSS i en egen fil som heter styles.css. Ikke legg CSS-kode i HTML-dokumentet.",
+    ],
+    resources: [
+      {
+        label: "HTML-kode til oppgaven",
+        url: "https://gist.github.com/olec-im-bfk/25b07426d8042eb0fc5ec18f60163147",
+      },
+    ],
+  },
+  {
+    title: "Arv og spesifisitet",
+    description:
+      "Ta utgangspunkt i HTML-koden fra lenken, og gjør oppgavene i styles.css.",
+    instructions: [
+      "a) Angi font-family, font-size og color på body. Hvilke elementer arver disse egenskapene?",
+      "b) Gi body en lys blå background-color. Arves bakgrunnsfargen? Hvorfor eller hvorfor ikke?",
+      "c) Legg border og litt padding på .info-boks. Hvorfor påvirker ikke disse egenskapene h2 eller p direkte?",
+      "d) Overstyr arv i .fremhev ved å endre color til rød og border-color til samme rødfarge. Hvorfor ble ikke teksten i de andre seksjonene rød?",
+      "e) Sett font-size: 0.9em på alle footer-elementer. Hva er forskjellen mellom em og px med tanke på arv?",
+      "f) Skriv en regel som bare gjør avsnittet i header (klassen .intro) grønt. Hvordan hjelper spesifisitet deg med å overstyre arv?",
+    ],
+    resources: [
+      {
+        label: "HTML-kode til oppgaven",
+        url: "https://gist.github.com/olec-im-bfk/a922b6a9f445f8518331485f23800adf",
+      },
+    ],
+  },
+  {
+    title: "Bakgrunnsbilde",
+    description:
+      "Legg til et bakgrunnsbilde på nettsiden og kontroller hvordan bildet vises, slik at resultatet ligner referansebildet i oppgavearket.",
+    instructions: [
+      "Last ned ZIP-filen «CSS-oppgave - Background Image», pakk den ut, og legg HTML-, CSS- og JPG-filene i en arbeidsmappe.",
+      "I styles.css legger du til et bakgrunnsbilde på body.",
+      "Bruk background-image, background-size, background-position, background-repeat og background-attachment.",
+    ],
+  },
+  {
+    title: "Plasser sitat i fire hjørner",
+    description:
+      "Fordel sitatet i fire bokser, én i hvert hjørne av nettsiden, kun ved å bruke CSS. Boksene skal beholde plasseringen når skjermen eller nettleservinduet endrer størrelse.",
+    instructions: [
+      "Bruk den oppgitte HTML-koden, og skriv all CSS i en ny fil som heter styles.css.",
+      "Bruk fixed positioning, bredde 25 %, rammer i fire ulike farger, og 5px margin og padding på boksene.",
+      "Sentrer lenken øverst på siden.",
+    ],
+    resources: [
+      {
+        label: "HTML-kode til oppgaven",
+        url: "https://gist.github.com/olec-im-bfk/e7e5f578da45bb31f9673d94529fb473",
+      },
+    ],
+  },
+  {
+    title: "Float",
+    description:
+      "Bruk float i CSS til å plassere bilder ved siden av teksten. Det første bildet skal flyte til venstre for teksten, og det andre til høyre.",
+    resources: [
+      {
+        label: "HTML-kode til oppgaven",
+        url: "https://gist.github.com/olec-im-bfk/1c343dd7d158c7ef4853184e7b23ad0b",
+      },
+      {
+        label: "CSS-kode til oppgaven",
+        url: "https://gist.github.com/olec-im-bfk/286e28f36ad91df41975f6d749e01fc1",
+      },
+    ],
+  },
+  {
+    title: "Horisontal navigasjonsmeny",
+    description:
+      "Gjenskap den horisontale navigasjonsmenyen øverst på nettsiden ved å bruke CSS. Oppgaven handler om styling av lister og float.",
+    resources: [
+      {
+        label: "Les om styling av lister i CSS",
+        url: "https://www.w3schools.com/css/css_list.asp",
+      },
+      {
+        label: "HTML-kode til oppgaven",
+        url: "https://gist.github.com/olec-im-bfk/17da7a039684e55f75ab1177a88256dd",
+      },
+      {
+        label: "CSS-kode til oppgaven",
+        url: "https://gist.github.com/olec-im-bfk/f085934988c033e72f2be43388d4efe6",
+      },
+    ],
+  },
+];
 
 const quizQuestions: QuizQuestion[] = [
   {
@@ -349,6 +492,8 @@ function App() {
     selectedTopic === "Alle oppgaver"
       ? tasks
       : tasks.filter((task) => task.topic === selectedTopic);
+  const showCss1 = selectedTopic === "Alle oppgaver" || selectedTopic === "HTML, CSS og JavaScript";
+  const visibleTaskCount = visibleTasks.length + Number(showCss1);
   const visibleResources =
     selectedTopic === "Alle oppgaver"
       ? resources
@@ -640,6 +785,15 @@ function App() {
             inert={!mobileMenuOpen}
           >
             <button
+              className={`mobile-nav-item ${view === "css1" ? "is-active" : ""}`}
+              onClick={() => setView("css1")}
+            >
+              <span className="nav-icon blue">
+                <Code2 size={16} />
+              </span>
+              <span>CSS1</span>
+            </button>
+            <button
               className={`mobile-nav-item ${view === "test" ? "is-active" : ""}`}
               onClick={startTest}
             >
@@ -702,6 +856,15 @@ function App() {
           <div className="nav-section desktop-nav-section">
             <p className="nav-heading">Tren på</p>
             <button
+              className={`nav-item ${view === "css1" ? "is-active" : ""}`}
+              onClick={() => setView("css1")}
+            >
+              <span className="nav-icon blue">
+                <Code2 size={15} />
+              </span>
+              <span>CSS1</span>
+            </button>
+            <button
               className={`nav-item ${view === "test" ? "is-active" : ""}`}
               onClick={startTest}
             >
@@ -745,11 +908,13 @@ function App() {
                   ? "Butikk"
                   : view === "profile"
                     ? "Elevprofil"
-                  : view === "nova"
-                    ? "Om Nova"
-                    : view === "test"
-                      ? "Kartleggingstest"
-                      : "Min læringsside"}
+                    : view === "nova"
+                      ? "Om Nova"
+                      : view === "test"
+                        ? "Kartleggingstest"
+                        : view === "css1"
+                          ? "CSS1"
+                          : "Min læringsside"}
             </strong>
           </div>
           <div className="top-actions">
@@ -1221,6 +1386,71 @@ function App() {
               <p><strong>Drømmen min?</strong> Å bruke kreativitet og teknologi i en jobb i IT-bransjen.</p>
             </div>
           </section>
+        ) : view === "css1" ? (
+          <section className="catalog-page css1-page">
+            <button
+              className="back-link"
+              onClick={() => showTasks("HTML, CSS og JavaScript")}
+            >
+              <ArrowLeft size={15} /> Til HTML, CSS og JavaScript
+            </button>
+            <div className="catalog-heading">
+              <div>
+                <p className="eyebrow">
+                  <span className="eyebrow-line" /> PRAKTISK CSS-TEST
+                </p>
+                <h1>CSS1</h1>
+                <p className="welcome-copy">
+                  Ni oppgaver om CSS. Følg instruksjonene og bruk ressursene
+                  underveis.
+                </p>
+              </div>
+              <div className="catalog-stats">
+                <span>
+                  <Code2 size={17} /> <strong>{css1Exercises.length}</strong>{" "}
+                  oppgaver
+                </span>
+              </div>
+            </div>
+            <ol className="css1-exercise-list">
+              {css1Exercises.map((exercise, index) => (
+                <li className="css1-exercise" key={exercise.title}>
+                  <article aria-labelledby={`css1-exercise-${index + 1}`}>
+                    <div className="css1-exercise-number">
+                      Oppgave {index + 1}
+                    </div>
+                    <h2 id={`css1-exercise-${index + 1}`}>{exercise.title}</h2>
+                    <p>{exercise.description}</p>
+                    {exercise.instructions && (
+                      <ul>
+                        {exercise.instructions.map((instruction) => (
+                          <li key={instruction}>{instruction}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {exercise.resources && (
+                      <div className="css1-resources">
+                        <strong>Nyttige ressurser</strong>
+                        <ul>
+                          {exercise.resources.map(({ label, url }) => (
+                            <li key={url}>
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {label} <ArrowUpRight size={14} />
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </article>
+                </li>
+              ))}
+            </ol>
+          </section>
         ) : view === "tasks" ? (
           <section className="catalog-page">
             <button className="back-link" onClick={() => setView("home")}>
@@ -1250,7 +1480,7 @@ function App() {
                   <strong>
                     {catalogTab === "resources"
                       ? visibleResources.length
-                      : visibleTasks.length}
+                      : visibleTaskCount}
                   </strong>{" "}
                   {catalogTab === "resources" ? "ressurser" : "oppgaver"}
                 </span>
@@ -1264,7 +1494,7 @@ function App() {
                 className={catalogTab === "tasks" ? "tab-active" : ""}
                 onClick={() => setCatalogTab("tasks")}
               >
-                Oppgaver <span>{visibleTasks.length}</span>
+                Oppgaver <span>{visibleTaskCount}</span>
               </button>
               <button
                 className={catalogTab === "resources" ? "tab-active" : ""}
@@ -1275,6 +1505,33 @@ function App() {
             </div>
             {catalogTab === "tasks" ? visibleTasks.length ? (
               <div className="task-grid">
+                {showCss1 && (
+                  <article className="task-card css1-task-card">
+                    <div className="task-card-top">
+                      <span className="task-icon blue">
+                        <Code2 size={21} />
+                      </span>
+                      <span className="task-xp resource-format">9 oppgaver</span>
+                    </div>
+                    <p className="task-topic">HTML, CSS og JavaScript</p>
+                    <h2>CSS1</h2>
+                    <p className="task-description">
+                      En praktisk CSS-test med ni oppgaver om farger,
+                      bakgrunner, Box Model, arv, float og navigasjon.
+                    </p>
+                    <div className="task-meta">
+                      <span>Praktisk test</span>
+                      <i />
+                      <span>9 oppgaver</span>
+                    </div>
+                    <button
+                      className="task-open"
+                      onClick={() => setView("css1")}
+                    >
+                      Åpne CSS1 <ArrowUpRight size={15} />
+                    </button>
+                  </article>
+                )}
                 {visibleTasks.map(
                   ({
                     title,
