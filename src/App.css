@@ -166,6 +166,17 @@
 .resource-note p { flex: 1; color: #777d8b; font-size: 9px; line-height: 1.5; }
 .resource-note p strong { color: #394054; }
 .resource-note > svg { color: #68a68c; }
+.css1-intro, .css1-method { padding: 22px; border: 1px solid #e5e7ec; border-radius: 7px; background: #fff; }
+.css1-intro h2, .css1-method h2 { margin: 0; color: #252b3e; font: 600 19px/1.4 var(--display); }
+.css1-intro p { max-width: 850px; margin: 9px 0 0; color: #62697a; font-size: 14px; line-height: 1.75; }
+.css1-method { margin-top: 12px; background: #f9faff; }
+.css1-method h3 { margin: 15px 0 0; color: #394054; font: 600 16px/1.5 var(--display); }
+.css1-method p { margin: 8px 0 0; color: #62697a; font-size: 14px; line-height: 1.7; }
+.css1-method .css1-method-list-title { margin-top: 14px; color: #394054; font-weight: 600; }
+.css1-method ul { display: grid; gap: 8px; padding-left: 21px; margin: 8px 0 0; color: #62697a; font-size: 14px; line-height: 1.65; }
+.css1-method a { color: #506bc5; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.css1-method a:hover { color: #31499a; }
+.css1-method code { padding: 1px 4px; border-radius: 3px; color: #394054; background: #e9ecf5; font: 0.9em var(--mono); }
 .css1-exercise-list { display: grid; gap: 12px; padding: 20px 0; margin: 0; list-style: none; }
 .css1-exercise { min-width: 0; padding: 20px; border: 1px solid #e5e7ec; border-radius: 7px; background: #fff; }
 .css1-exercise-number { margin-bottom: 5px; color: #526bc1; font-size: 11px; font-weight: 700; letter-spacing: .65px; text-transform: uppercase; }
@@ -327,6 +338,9 @@
   .catalog-heading h1 { font-size: 24px; }
   .catalog-heading .welcome-copy { margin-top: 6px; }
   .catalog-stats { gap: 12px; }
+  .css1-intro, .css1-method { padding: 16px; }
+  .css1-intro h2, .css1-method h2 { font-size: 17px; }
+  .css1-intro p, .css1-method p, .css1-method ul { font-size: 13px; }
   .css1-exercise-list { gap: 10px; padding-block: 14px; }
   .css1-exercise { padding: 16px; }
   .css1-exercise h2 { font-size: 17px; }

@@ -1412,6 +1412,68 @@ function App() {
                 </span>
               </div>
             </div>
+            <section className="css1-intro" aria-labelledby="css1-intro-title">
+              <h2 id="css1-intro-title">Hvorfor jobber vi med CSS?</h2>
+              <p>
+                Når vi lager nettsider, er HTML grunnmuren som bygger opp
+                innholdet – tekst, bilder, overskrifter og lenker. Men uten CSS
+                blir nettsiden likevel ganske kjedelig og utydelig. CSS
+                (Cascading Style Sheets) er språket vi bruker for å bestemme
+                hvordan en nettside ser ut: farger, skrifttyper, plassering av
+                elementer og hvordan siden oppfører seg på ulike skjermer. Å
+                lære CSS handler derfor ikke bare om “pynt”, men om
+                kommunikasjon og tilpasning. En god nettside skal ikke bare
+                fungere, den skal være forståelig, brukervennlig og tilpasset
+                den gruppen mennesker den er laget for. I dette prosjektet skal
+                dere derfor jobbe med hvordan dere kan bruke CSS til å gjøre en
+                idé tydeligere og enklere å oppleve.
+              </p>
+            </section>
+            <section className="css1-method" aria-labelledby="css1-method-title">
+              <h2 id="css1-method-title">Hvordan skal du jobbe med CSS?</h2>
+              <h3>Grunnleggende CSS</h3>
+              <p>
+                Når vi arbeider med CSS (<em>Cascading Style Sheets</em>), kan
+                vi plassere stilreglene våre på tre forskjellige steder:{" "}
+                <strong>inline</strong>, <strong>intern</strong> og{" "}
+                <strong>ekstern</strong>.
+              </p>
+              <p className="css1-method-list-title">
+                De tre plasseringene for CSS:
+              </p>
+              <ul>
+                <li>
+                  <a href="https://schoolvg1.vercel.app/css.html#inline">
+                    Inline
+                  </a>{" "}
+                  – stil direkte på et enkelt HTML-element.
+                </li>
+                <li>
+                  <a href="https://schoolvg1.vercel.app/css.html#internal">
+                    Intern
+                  </a>{" "}
+                  – stil i en <code>&lt;style&gt;</code>-tagg i{" "}
+                  <code>&lt;head&gt;</code>.
+                </li>
+                <li>
+                  <a href="https://schoolvg1.vercel.app/css.html#external">
+                    Ekstern
+                  </a>{" "}
+                  – stil i en separat <code>.css</code>-fil koblet inn med{" "}
+                  <code>&lt;link&gt;</code>.
+                </li>
+              </ul>
+            </section>
+            <section className="css1-method" aria-labelledby="css1-selectors-title">
+              <h2 id="css1-selectors-title">CSS-velgere</h2>
+              <p>
+                En CSS-selektor er starten på en CSS-regel. Ordet selektor
+                betyr egentlig «velger». Den brukes til å peke ut hvilke deler
+                av en nettside (HTML-elementer) som skal få en bestemt stil.
+                Når du lager en regel i CSS, sier selektoren altså til
+                nettleseren: «Dette er de elementene du skal endre stilen på.»
+              </p>
+            </section>
             <ol className="css1-exercise-list">
               {css1Exercises.map((exercise, index) => (
                 <li className="css1-exercise" key={exercise.title}>
