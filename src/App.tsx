@@ -201,6 +201,46 @@ type SavedStudentProgress = {
   purchased: boolean;
 };
 
+type AuthenticatedStudent = {
+  id: number | string;
+  brukernavn: string;
+  etternavn: string;
+  klasse: string;
+  email: string;
+};
+
+type LoginResponse = {
+  success: true;
+  token: string;
+  user: AuthenticatedStudent;
+};
+
+const isLoginResponse = (value: unknown): value is LoginResponse => {
+  if (typeof value !== "object" || value === null || !("user" in value)) {
+    return false;
+  }
+
+  const user = value.user;
+  return (
+    "success" in value &&
+    value.success === true &&
+    "token" in value &&
+    typeof value.token === "string" &&
+    typeof user === "object" &&
+    user !== null &&
+    "id" in user &&
+    (typeof user.id === "number" || typeof user.id === "string") &&
+    "brukernavn" in user &&
+    typeof user.brukernavn === "string" &&
+    "etternavn" in user &&
+    typeof user.etternavn === "string" &&
+    "klasse" in user &&
+    typeof user.klasse === "string" &&
+    "email" in user &&
+    typeof user.email === "string"
+  );
+};
+
 const css1Exercises: Css1Exercise[] = [
   {
     title: "CSS colors and fonts",
@@ -421,7 +461,10 @@ function App() {
   }).format(new Date());
   const [studentName, setStudentName] = useState("");
   const [studentClass, setStudentClass] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authToken, setAuthToken] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [view, setView] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("Alle oppgaver");
@@ -687,7 +730,186 @@ function App() {
       ? `Kartleggingen viser at du kan øve mer på ${task.topic.toLowerCase()}.`
       : `Et nytt tema å utforske etter den gode innsatsen din.`;
 
-  if (!studentName) {
+  const startStudentSession = (user: AuthenticatedStudent, token: string) => {
+    const name = `${user.brukernavn} ${user.etternavn}`;
+    const storageKey = getStudentProfileStorageKey(name, user.klasse);
+    const legacyStorageKey = `nodequest:profile:${name.toLocaleLowerCase("nb-NO")}`;
+    setPoints(0);
+    setTotalPointsEarned(0);
+    setAssessmentHistory([]);
+    setOwnedMotorcycles([]);
+    setPlayerLevel(1);
+    setBestAssessmentScore(0);
+    setAssessmentPassed(false);
+    setPurchased(false);
+
+    try {
+      const saved =
+        window.localStorage.getItem(storageKey) ??
+        window.localStorage.getItem(legacyStorageKey);
+      if (saved) {
+        const progress = JSON.parse(saved) as Partial<SavedStudentProgress>;
+        setPoints(progress.points ?? 0);
+        setTotalPointsEarned(progress.totalPointsEarned ?? 0);
+        setAssessmentHistory(
+          Array.isArray(progress.assessmentHistory)
+            ? progress.assessmentHistory
+            : [],
+        );
+        setOwnedMotorcycles(
+          Array.isArray(progress.ownedMotorcycles)
+            ? progress.ownedMotorcycles
+            : [],
+        );
+        setPlayerLevel(progress.playerLevel ?? 1);
+        setBestAssessmentScore(progress.bestAssessmentScore ?? 0);
+        setAssessmentPassed(progress.assessmentPassed ?? false);
+        setPurchased(progress.purchased ?? false);
+      }
+    } catch {
+      window.localStorage.removeItem(storageKey);
+    }
+
+    setStudentName(name);
+    setStudentClass(user.klasse);
+    setAuthToken(token);
+  };
+
+  const handleAuthSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setAuthError("");
+    const formData = new FormData(event.currentTarget);
+    const password = String(formData.get("student-password") ?? "");
+
+    if (authMode === "register") {
+      const passwordConfirmation = String(
+        formData.get("student-password-confirmation") ?? "",
+      );
+      if (password !== passwordConfirmation) {
+        setAuthError(
+          "Passordene er ikke like. Kontroller at du har skrevet dem riktig.",
+        );
+        return;
+      }
+
+      const firstName = String(formData.get("student-first-name") ?? "")
+        .trim()
+        .replace(/\s+/g, " ");
+      const lastName = String(formData.get("student-last-name") ?? "")
+        .trim()
+        .replace(/\s+/g, " ");
+      const className = String(formData.get("student-class") ?? "");
+      const email = String(formData.get("student-email") ?? "").trim();
+
+      setIsAuthenticating(true);
+      try {
+        const registerResponse = await fetch(
+          "https://api.nodequest.org/register",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              brukernavn: firstName,
+              etternavn: lastName,
+              klasse: className,
+              email,
+              passord: password,
+            }),
+          },
+        );
+
+        if (!registerResponse.ok) {
+          setAuthError(
+            registerResponse.status === 409
+              ? "Det finnes allerede en konto med dette navnet eller denne e-postadressen. Prøv å logge inn."
+              : `Registreringen mislyktes (HTTP ${registerResponse.status}). Prøv igjen senere.`,
+          );
+          return;
+        }
+
+        const registrationResult: unknown = await registerResponse.json();
+        if (
+          typeof registrationResult !== "object" ||
+          registrationResult === null ||
+          !("success" in registrationResult) ||
+          registrationResult.success !== true
+        ) {
+          setAuthError(
+            "Registreringen kunne ikke bekreftes av serveren. Prøv igjen senere.",
+          );
+          return;
+        }
+
+        const loginResponse = await fetch("https://api.nodequest.org/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: email, passord: password }),
+        });
+        if (!loginResponse.ok) {
+          setAuthMode("login");
+          setAuthError(
+            "Kontoen ble opprettet, men automatisk innlogging mislyktes. Logg inn med e-postadressen og passordet ditt.",
+          );
+          return;
+        }
+
+        const loginResult: unknown = await loginResponse.json();
+        if (!isLoginResponse(loginResult)) {
+          setAuthMode("login");
+          setAuthError(
+            "Kontoen ble opprettet, men serveren sendte et ugyldig innloggingssvar. Prøv å logge inn.",
+          );
+          return;
+        }
+
+        startStudentSession(loginResult.user, loginResult.token);
+      } catch {
+        setAuthError(
+          "Fikk ikke kontakt med serveren. Kontroller nettforbindelsen og prøv igjen.",
+        );
+      } finally {
+        setIsAuthenticating(false);
+      }
+      return;
+    }
+
+    const identifier = String(formData.get("student-identifier") ?? "").trim();
+    setIsAuthenticating(true);
+    try {
+      const response = await fetch("https://api.nodequest.org/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, passord: password }),
+      });
+
+      if (!response.ok) {
+        setAuthError(
+          response.status === 401
+            ? "E-post/brukernavn eller passord stemmer ikke."
+            : `Innloggingen mislyktes (HTTP ${response.status}). Prøv igjen senere.`,
+        );
+        return;
+      }
+
+      const result: unknown = await response.json();
+      if (!isLoginResponse(result)) {
+        setAuthError(
+          "Innloggingsserveren sendte et ugyldig svar. Prøv igjen senere.",
+        );
+        return;
+      }
+
+      startStudentSession(result.user, result.token);
+    } catch {
+      setAuthError(
+        "Fikk ikke kontakt med innloggingsserveren. Kontroller nettforbindelsen og prøv igjen.",
+      );
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  if (!studentName || !authToken) {
     return (
       <main className="student-gate">
         <section className="student-gate-panel" aria-labelledby="student-gate-title">
@@ -702,156 +924,147 @@ function App() {
           <p className="eyebrow">
             <span className="eyebrow-line" /> KLAR FOR Å STARTE?
           </p>
-          <h1 id="student-gate-title">SKRIV INN OPPLYSNINGENE DINE</h1>
+          <h1 id="student-gate-title">
+            {authMode === "login" ? "LOGG INN PÅ NODEQUEST" : "REGISTRER DEG"}
+          </h1>
           <p className="student-gate-copy">
-            Skriv inn opplysningene dine. Passordet brukes bare til å kontrollere
-            at du har skrevet det likt begge gangene, og lagres ikke.
+            {authMode === "login"
+              ? "Logg inn for å ta kartleggingstester og fortsette læringsløypa."
+              : "Registrer deg for å få tilgang til kartleggingstester og resten av læringsløypa. Passordet lagres sikkert på serveren."}
           </p>
-          <form
-            className="student-registration-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const formData = new FormData(event.currentTarget);
-              const password = String(formData.get("student-password") ?? "");
-              const passwordConfirmation = String(
-                formData.get("student-password-confirmation") ?? "",
-              );
-              if (password !== passwordConfirmation) {
-                setPasswordError("Passordene er ikke like. Kontroller at du har skrevet dem riktig.");
-                return;
-              }
-
-              setPasswordError("");
-              const firstName = String(formData.get("student-first-name") ?? "")
-                .trim()
-                .replace(/\s+/g, " ");
-              const lastName = String(formData.get("student-last-name") ?? "")
-                .trim()
-                .replace(/\s+/g, " ");
-              const className = String(formData.get("student-class") ?? "");
-              if (firstName && lastName && className) {
-                const name = `${firstName} ${lastName}`;
-                const storageKey = getStudentProfileStorageKey(name, className);
-                const legacyStorageKey = `nodequest:profile:${name.toLocaleLowerCase("nb-NO")}`;
-                try {
-                  const saved =
-                    window.localStorage.getItem(storageKey) ??
-                    window.localStorage.getItem(legacyStorageKey);
-                  if (saved) {
-                    const progress = JSON.parse(saved) as Partial<SavedStudentProgress>;
-                    setPoints(progress.points ?? 0);
-                    setTotalPointsEarned(progress.totalPointsEarned ?? 0);
-                    setAssessmentHistory(
-                      Array.isArray(progress.assessmentHistory)
-                        ? progress.assessmentHistory
-                        : [],
-                    );
-                    setOwnedMotorcycles(
-                      Array.isArray(progress.ownedMotorcycles)
-                        ? progress.ownedMotorcycles
-                        : [],
-                    );
-                    setPlayerLevel(progress.playerLevel ?? 1);
-                    setBestAssessmentScore(progress.bestAssessmentScore ?? 0);
-                    setAssessmentPassed(progress.assessmentPassed ?? false);
-                    setPurchased(progress.purchased ?? false);
-                  }
-                } catch {
-                  window.localStorage.removeItem(storageKey);
-                }
-                setStudentName(name);
-                setStudentClass(className);
-              }
-            }}
-          >
+          <div className="auth-mode-switch" aria-label="Velg handling" role="group">
+            <button
+              type="button"
+              aria-pressed={authMode === "login"}
+              className={authMode === "login" ? "is-active" : ""}
+              onClick={() => {
+                setAuthMode("login");
+                setAuthError("");
+              }}
+            >
+              Logg inn
+            </button>
+            <button
+              type="button"
+              aria-pressed={authMode === "register"}
+              className={authMode === "register" ? "is-active" : ""}
+              onClick={() => {
+                setAuthMode("register");
+                setAuthError("");
+              }}
+            >
+              Registrer deg
+            </button>
+          </div>
+          <form className="student-registration-form" onSubmit={handleAuthSubmit}>
             <div className="student-registration-fields">
-              <div className="student-registration-field">
-                <label htmlFor="student-first-name">NAVN</label>
-                <input
-                  autoFocus
-                  autoComplete="given-name"
-                  id="student-first-name"
-                  name="student-first-name"
-                  placeholder="NAVN"
-                  required
-                />
-              </div>
-              <div className="student-registration-field">
-                <label htmlFor="student-last-name">ETTERNAVN</label>
-                <input
-                  autoComplete="family-name"
-                  id="student-last-name"
-                  name="student-last-name"
-                  placeholder="ETTERNAVN"
-                  required
-                />
-              </div>
-              <div className="student-registration-field">
-                <label htmlFor="student-class">KLASSE</label>
-                <select
-                  id="student-class"
-                  name="student-class"
-                  required
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    Velg klasse
-                  </option>
-                  <option value="VG1">VG1</option>
-                  <option value="VG2">VG2</option>
-                </select>
-              </div>
-              <div className="student-registration-field">
-                <label htmlFor="student-email">E-POSTADRESSE</label>
-                <input
-                  autoComplete="email"
-                  id="student-email"
-                  name="student-email"
-                  placeholder="navn@eksempel.no"
-                  type="email"
-                  required
-                />
-              </div>
+              {authMode === "register" ? (
+                <>
+                  <div className="student-registration-field">
+                    <label htmlFor="student-first-name">NAVN</label>
+                    <input
+                      autoFocus
+                      autoComplete="given-name"
+                      id="student-first-name"
+                      name="student-first-name"
+                      placeholder="NAVN"
+                      required
+                    />
+                  </div>
+                  <div className="student-registration-field">
+                    <label htmlFor="student-last-name">ETTERNAVN</label>
+                    <input
+                      autoComplete="family-name"
+                      id="student-last-name"
+                      name="student-last-name"
+                      placeholder="ETTERNAVN"
+                      required
+                    />
+                  </div>
+                  <div className="student-registration-field">
+                    <label htmlFor="student-class">KLASSE</label>
+                    <select
+                      id="student-class"
+                      name="student-class"
+                      required
+                      defaultValue=""
+                    >
+                      <option value="" disabled>
+                        Velg klasse
+                      </option>
+                      <option value="VG1">VG1</option>
+                      <option value="VG2">VG2</option>
+                    </select>
+                  </div>
+                  <div className="student-registration-field">
+                    <label htmlFor="student-email">E-POSTADRESSE</label>
+                    <input
+                      autoComplete="email"
+                      id="student-email"
+                      name="student-email"
+                      placeholder="navn@eksempel.no"
+                      type="email"
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="student-registration-field">
+                  <label htmlFor="student-identifier">E-POST ELLER BRUKERNAVN</label>
+                  <input
+                    autoFocus
+                    autoComplete="username"
+                    id="student-identifier"
+                    name="student-identifier"
+                    required
+                  />
+                </div>
+              )}
               <div className="student-registration-field">
                 <label htmlFor="student-password">PASSORD</label>
                 <input
-                  autoComplete="new-password"
+                  autoComplete={
+                    authMode === "register" ? "new-password" : "current-password"
+                  }
                   id="student-password"
                   name="student-password"
                   type="password"
                   required
-                  onChange={() => setPasswordError("")}
                 />
               </div>
-              <div className="student-registration-field">
-                <label htmlFor="student-password-confirmation">
-                  BEKREFT PASSORD
-                </label>
-                <input
-                  autoComplete="new-password"
-                  aria-describedby={
-                    passwordError ? "student-password-error" : undefined
-                  }
-                  aria-invalid={passwordError ? true : undefined}
-                  id="student-password-confirmation"
-                  name="student-password-confirmation"
-                  type="password"
-                  required
-                  onChange={() => setPasswordError("")}
-                />
-              </div>
+              {authMode === "register" && (
+                <div className="student-registration-field">
+                  <label htmlFor="student-password-confirmation">
+                    BEKREFT PASSORD
+                  </label>
+                  <input
+                    autoComplete="new-password"
+                    id="student-password-confirmation"
+                    name="student-password-confirmation"
+                    type="password"
+                    required
+                  />
+                </div>
+              )}
             </div>
-            {passwordError && (
-              <p
-                className="student-password-error"
-                id="student-password-error"
-                role="alert"
-              >
-                {passwordError}
+            {authError && (
+              <p className="student-password-error" role="alert">
+                {authError}
               </p>
             )}
-            <button className="primary-button" type="submit">
-              Start læringsløypa <ChevronRight size={18} />
+            <button
+              className="primary-button"
+              type="submit"
+              disabled={isAuthenticating}
+            >
+              {isAuthenticating
+                ? authMode === "login"
+                  ? "Logger inn..."
+                  : "Oppretter konto..."
+                : authMode === "login"
+                  ? "Logg inn og start"
+                  : "Opprett konto og start"}
+              {!isAuthenticating && <ChevronRight size={18} />}
             </button>
           </form>
         </section>
