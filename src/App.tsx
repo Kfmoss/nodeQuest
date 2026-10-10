@@ -400,6 +400,19 @@ const REQUIRED_CORRECT_FOR_LEVEL_TWO = Math.ceil(
   (quizQuestions.length * LEVEL_TWO_PASS_PERCENT) / 100,
 );
 
+const getStudentProfileStorageKey = (studentName: string, studentClass: string) => {
+  const normalizedName = studentName
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("nb-NO");
+  const normalizedClass = studentClass
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("nb-NO");
+
+  return `nodequest:profile:${encodeURIComponent(normalizedName)}:${encodeURIComponent(normalizedClass)}`;
+};
+
 function App() {
   const today = new Intl.DateTimeFormat("nb-NO", {
     weekday: "long",
@@ -407,6 +420,8 @@ function App() {
     month: "long",
   }).format(new Date());
   const [studentName, setStudentName] = useState("");
+  const [studentClass, setStudentClass] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [view, setView] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("Alle oppgaver");
@@ -444,9 +459,9 @@ function App() {
   const [purchased, setPurchased] = useState(false);
 
   useEffect(() => {
-    if (!studentName) return;
+    if (!studentName || !studentClass) return;
 
-    const storageKey = `nodequest:profile:${studentName.toLocaleLowerCase("nb-NO")}`;
+    const storageKey = getStudentProfileStorageKey(studentName, studentClass);
     const progress: SavedStudentProgress = {
       points,
       totalPointsEarned,
@@ -471,6 +486,7 @@ function App() {
     playerLevel,
     points,
     purchased,
+    studentClass,
     studentName,
     totalPointsEarned,
   ]);
@@ -686,20 +702,41 @@ function App() {
           <p className="eyebrow">
             <span className="eyebrow-line" /> KLAR FOR Å STARTE?
           </p>
-          <h1 id="student-gate-title">SKRIV INN NAVNET DITT</h1>
+          <h1 id="student-gate-title">SKRIV INN OPPLYSNINGENE DINE</h1>
           <p className="student-gate-copy">
-            Så gjør vi læringsløypa klar for deg.
+            Skriv inn opplysningene dine. Passordet brukes bare til å kontrollere
+            at du har skrevet det likt begge gangene, og lagres ikke.
           </p>
           <form
-            className="student-name-form"
+            className="student-registration-form"
             onSubmit={(event) => {
               event.preventDefault();
               const formData = new FormData(event.currentTarget);
-              const name = String(formData.get("student-name") ?? "").trim();
-              if (name) {
-                const storageKey = `nodequest:profile:${name.toLocaleLowerCase("nb-NO")}`;
+              const password = String(formData.get("student-password") ?? "");
+              const passwordConfirmation = String(
+                formData.get("student-password-confirmation") ?? "",
+              );
+              if (password !== passwordConfirmation) {
+                setPasswordError("Passordene er ikke like. Kontroller at du har skrevet dem riktig.");
+                return;
+              }
+
+              setPasswordError("");
+              const firstName = String(formData.get("student-first-name") ?? "")
+                .trim()
+                .replace(/\s+/g, " ");
+              const lastName = String(formData.get("student-last-name") ?? "")
+                .trim()
+                .replace(/\s+/g, " ");
+              const className = String(formData.get("student-class") ?? "");
+              if (firstName && lastName && className) {
+                const name = `${firstName} ${lastName}`;
+                const storageKey = getStudentProfileStorageKey(name, className);
+                const legacyStorageKey = `nodequest:profile:${name.toLocaleLowerCase("nb-NO")}`;
                 try {
-                  const saved = window.localStorage.getItem(storageKey);
+                  const saved =
+                    window.localStorage.getItem(storageKey) ??
+                    window.localStorage.getItem(legacyStorageKey);
                   if (saved) {
                     const progress = JSON.parse(saved) as Partial<SavedStudentProgress>;
                     setPoints(progress.points ?? 0);
@@ -723,18 +760,96 @@ function App() {
                   window.localStorage.removeItem(storageKey);
                 }
                 setStudentName(name);
+                setStudentClass(className);
               }
             }}
           >
-            <label htmlFor="student-name">ELEVENS NAVN</label>
-            <input
-              autoFocus
-              autoComplete="name"
-              id="student-name"
-              name="student-name"
-              placeholder="NAVNET DITT"
-              required
-            />
+            <div className="student-registration-fields">
+              <div className="student-registration-field">
+                <label htmlFor="student-first-name">NAVN</label>
+                <input
+                  autoFocus
+                  autoComplete="given-name"
+                  id="student-first-name"
+                  name="student-first-name"
+                  placeholder="NAVN"
+                  required
+                />
+              </div>
+              <div className="student-registration-field">
+                <label htmlFor="student-last-name">ETTERNAVN</label>
+                <input
+                  autoComplete="family-name"
+                  id="student-last-name"
+                  name="student-last-name"
+                  placeholder="ETTERNAVN"
+                  required
+                />
+              </div>
+              <div className="student-registration-field">
+                <label htmlFor="student-class">KLASSE</label>
+                <select
+                  id="student-class"
+                  name="student-class"
+                  required
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Velg klasse
+                  </option>
+                  <option value="VG1">VG1</option>
+                  <option value="VG2">VG2</option>
+                </select>
+              </div>
+              <div className="student-registration-field">
+                <label htmlFor="student-email">E-POSTADRESSE</label>
+                <input
+                  autoComplete="email"
+                  id="student-email"
+                  name="student-email"
+                  placeholder="navn@eksempel.no"
+                  type="email"
+                  required
+                />
+              </div>
+              <div className="student-registration-field">
+                <label htmlFor="student-password">PASSORD</label>
+                <input
+                  autoComplete="new-password"
+                  id="student-password"
+                  name="student-password"
+                  type="password"
+                  required
+                  onChange={() => setPasswordError("")}
+                />
+              </div>
+              <div className="student-registration-field">
+                <label htmlFor="student-password-confirmation">
+                  BEKREFT PASSORD
+                </label>
+                <input
+                  autoComplete="new-password"
+                  aria-describedby={
+                    passwordError ? "student-password-error" : undefined
+                  }
+                  aria-invalid={passwordError ? true : undefined}
+                  id="student-password-confirmation"
+                  name="student-password-confirmation"
+                  type="password"
+                  required
+                  onChange={() => setPasswordError("")}
+                />
+              </div>
+            </div>
+            {passwordError && (
+              <p
+                className="student-password-error"
+                id="student-password-error"
+                role="alert"
+              >
+                {passwordError}
+              </p>
+            )}
             <button className="primary-button" type="submit">
               Start læringsløypa <ChevronRight size={18} />
             </button>
@@ -1205,6 +1320,7 @@ function App() {
               <div>
                 <p className="eyebrow"><span className="eyebrow-line" /> ELEVPROFIL</p>
                 <h1>{studentName}</h1>
+                <p className="welcome-copy">Klasse {studentClass}</p>
                 <p className="welcome-copy">
                   Oversikt over kartlegginger, opptjente poeng og kjøp.
                 </p>
