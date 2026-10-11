@@ -199,19 +199,23 @@
 .memory-timer.is-warning strong { color: #8a6415; }
 .memory-progress { gap: 7px; }
 .memory-progress strong { color: #438a76; }
+.memory-nova-guide { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr); align-items: center; gap: 20px; padding: 18px; margin-bottom: 16px; border: 1px solid #e2e7f2; border-radius: 8px; background: #f7f8ff; }
+.memory-nova-guide > img { width: 100%; aspect-ratio: 1; display: block; border-radius: 7px; background: #e9edfa; object-fit: contain; }
+.memory-nova-guide .eyebrow { margin-bottom: 6px; color: #526bc5; }
+.memory-nova-guide h2 { margin: 0; color: #252b3e; font: 600 18px/1.4 var(--display); }
+.memory-nova-intro { margin: 6px 0 10px; color: #62697a; font-size: 13px; line-height: 1.55; }
+.memory-nova-guide ol { display: grid; gap: 6px; padding-left: 22px; margin: 0; color: #62697a; font-size: 13px; line-height: 1.55; }
+.memory-nova-guide li::marker { color: #526bc5; font-weight: 700; }
 .memory-study-list { padding: 22px; border: 1px solid #e5e7ec; border-radius: 7px; background: #fff; }
 .memory-study-list h2 { margin: 0 0 14px; color: #252b3e; font: 600 19px/1.4 var(--display); }
 .memory-study-list dl { display: grid; gap: 10px; margin: 0; }
 .memory-study-item { display: grid; grid-template-columns: minmax(150px, .7fr) 1.3fr; gap: 14px; padding: 13px 15px; border: 1px solid #e8eaf0; border-radius: 6px; background: #fbfcff; }
 .memory-study-item dt { color: #4356a0; font-size: 14px; font-weight: 700; }
 .memory-study-item dd { margin: 0; color: #62697a; font-size: 14px; line-height: 1.55; }
-.memory-study-layout { display: flex; align-items: stretch; gap: 12px; }
-.memory-study-layout .memory-study-list { min-width: 0; flex: 1; }
+.memory-ready-action { display: flex; justify-content: flex-end; margin-top: 15px; }
 .memory-timeline { position: relative; overflow: hidden; border-radius: 999px; background: #e9edf2; }
 .memory-timeline > span { position: absolute; display: block; border-radius: inherit; background: #3caa78; transition: width 200ms linear, height 200ms linear, background 200ms ease; }
 .memory-timeline.is-warning > span { background: #dc5148; }
-.memory-timeline-vertical { width: 12px; flex: 0 0 12px; margin: 22px 5px; }
-.memory-timeline-vertical > span { right: 0; bottom: 0; left: 0; }
 .memory-timeline-horizontal { height: 10px; margin-top: 18px; }
 .memory-timeline-horizontal > span { top: 0; bottom: 0; left: 0; }
 .memory-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; padding: 20px 0; }
@@ -384,10 +388,13 @@
   .catalog-heading h1 { font-size: 24px; }
   .catalog-heading .welcome-copy { margin-top: 6px; }
   .catalog-stats { gap: 12px; }
+  .memory-nova-guide { grid-template-columns: 82px minmax(0, 1fr); gap: 13px; padding: 13px; }
+  .memory-nova-guide h2 { font-size: 16px; }
+  .memory-nova-intro, .memory-nova-guide ol { font-size: 12px; }
   .memory-study-list { padding: 16px; }
   .memory-study-item { grid-template-columns: 1fr; gap: 5px; padding: 12px; }
-  .memory-study-layout { gap: 8px; }
-  .memory-timeline-vertical { width: 9px; flex-basis: 9px; margin: 16px 2px; }
+  .memory-ready-action { justify-content: stretch; }
+  .memory-ready-action .primary-button { width: 100%; min-height: 48px; }
   .memory-board { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
   .memory-card { min-height: 130px; padding: 10px; font-size: 12px; }
   .css1-intro, .css1-method { padding: 16px; }

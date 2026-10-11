@@ -161,7 +161,6 @@ const motorcycles = [
 const MAX_TASK_TIME_MINUTES = 10;
 const MAX_TASK_TIME_SECONDS = MAX_TASK_TIME_MINUTES * 60;
 const MAX_TASK_POINTS = 10;
-const CSS_MEMORY_STUDY_SECONDS = 120;
 const CSS_MEMORY_GAME_SECONDS = 120;
 const CSS_MEMORY_MAX_POINTS = 100;
 const CSS_MEMORY_FULL_POINTS_THRESHOLD = 90;
@@ -585,9 +584,7 @@ function App() {
   const [cssMemoryPhase, setCssMemoryPhase] = useState<
     "study" | "playing" | "complete" | "expired"
   >("study");
-  const [cssMemorySeconds, setCssMemorySeconds] = useState(
-    CSS_MEMORY_STUDY_SECONDS,
-  );
+  const [cssMemorySeconds, setCssMemorySeconds] = useState(CSS_MEMORY_GAME_SECONDS);
   const [cssMemoryCards, setCssMemoryCards] = useState<CssMemoryCard[]>([]);
   const [selectedMemoryCards, setSelectedMemoryCards] = useState<string[]>([]);
   const [matchedMemoryPairs, setMatchedMemoryPairs] = useState<string[]>([]);
@@ -637,11 +634,17 @@ function App() {
     setCssMemoryCards(createCssMemoryCards());
     setSelectedMemoryCards([]);
     setMatchedMemoryPairs([]);
-    setCssMemorySeconds(CSS_MEMORY_STUDY_SECONDS);
+    setCssMemorySeconds(CSS_MEMORY_GAME_SECONDS);
     setCssMemoryPoints(0);
     setCssMemoryPhase("study");
-    cssMemoryDeadline.current = Date.now() + CSS_MEMORY_STUDY_SECONDS * 1000;
+    cssMemoryDeadline.current = null;
     setView("css-memory");
+  };
+
+  const startCssMemoryGame = () => {
+    setCssMemorySeconds(CSS_MEMORY_GAME_SECONDS);
+    cssMemoryDeadline.current = Date.now() + CSS_MEMORY_GAME_SECONDS * 1000;
+    setCssMemoryPhase("playing");
   };
 
   const selectCssMemoryCard = (card: CssMemoryCard) => {
@@ -725,7 +728,7 @@ function App() {
   const cssMemoryTimePercent = `${(cssMemorySeconds / CSS_MEMORY_GAME_SECONDS) * 100}%`;
 
   useEffect(() => {
-    if (cssMemoryPhase !== "study" && cssMemoryPhase !== "playing") return;
+    if (cssMemoryPhase !== "playing") return;
 
     const timer = window.setInterval(() => {
       const deadline = cssMemoryDeadline.current;
@@ -734,13 +737,7 @@ function App() {
       setCssMemorySeconds(secondsLeft);
       if (secondsLeft === 0) {
         cssMemoryDeadline.current = null;
-        if (cssMemoryPhase === "study") {
-          cssMemoryDeadline.current = Date.now() + CSS_MEMORY_GAME_SECONDS * 1000;
-          setCssMemorySeconds(CSS_MEMORY_GAME_SECONDS);
-          setCssMemoryPhase("playing");
-        } else {
-          setCssMemoryPhase("expired");
-        }
+        setCssMemoryPhase("expired");
       }
     }, 200);
 
@@ -1961,22 +1958,20 @@ function App() {
                 <h1>CSS-begreper</h1>
                 <p className="welcome-copy">
                   {cssMemoryPhase === "study"
-                    ? "Les og prøv å huske begrepene og forklaringene. Når tiden er ute, skjules listen."
+                    ? "Les begrepene så lenge du trenger. Når du er klar, starter en kortspillrunde på to minutter."
                     : cssMemoryPhase === "playing"
                       ? "Snu to kort om gangen og finn begrepet som hører sammen med forklaringen. Du har maks to minutter. Fullfør med minst 1:30 igjen for 100 poeng."
                       : "Du fant alle begrepsparene. Godt husket!"}
                 </p>
               </div>
-              {cssMemoryPhase === "study" || cssMemoryPhase === "playing" ? (
+              {cssMemoryPhase === "playing" ? (
                 <div
                   className={`memory-timer ${cssMemorySeconds <= 30 ? "is-warning" : ""}`}
                   role="timer"
-                  aria-label={`${cssMemorySeconds} sekunder igjen ${
-                    cssMemoryPhase === "study" ? "til å lese" : "av spilletiden"
-                  }`}
+                  aria-label={`${cssMemorySeconds} sekunder igjen av spilletiden`}
                 >
                   <Clock3 size={19} />
-                  <span>{cssMemoryPhase === "study" ? "Lesetid" : "Spilletid"}</span>
+                  <span>Spilletid</span>
                   <strong>
                     {Math.floor(cssMemorySeconds / 60)}:
                     {String(cssMemorySeconds % 60).padStart(2, "0")}
@@ -1991,7 +1986,30 @@ function App() {
             </div>
 
             {cssMemoryPhase === "study" ? (
-              <div className="memory-study-layout">
+              <>
+                <section className="memory-nova-guide" aria-labelledby="memory-nova-title">
+                  <img src={novaImage} alt="Nova" />
+                  <div>
+                    <p className="eyebrow">NOVA FORKLARER OPPGAVEN</p>
+                    <h2 id="memory-nova-title">Hei! Les tipsene før du begynner</h2>
+                    <p className="memory-nova-intro">
+                      Les begrepene og forklaringene under så lenge du trenger.
+                      Trykk på knappen under lista når du er klar til å finne parene.
+                    </p>
+                    <ol>
+                      <li>Les nøye og prøv å forstå forklaringene.</li>
+                      <li>
+                        Hvis du gjør noe annet samtidig, kan det virke
+                        distraherende og gjøre det vanskeligere å fokusere på
+                        forklaringene.
+                      </li>
+                      <li>
+                        Spør andre elever eller læreren hvis du ikke forstår en
+                        forklaring. Det hjelper alltid.
+                      </li>
+                    </ol>
+                  </div>
+                </section>
                 <section className="memory-study-list" aria-labelledby="memory-study-title">
                   <h2 id="memory-study-title">Begreper og forklaringer</h2>
                   <dl>
@@ -2003,17 +2021,12 @@ function App() {
                     ))}
                   </dl>
                 </section>
-                <div
-                  className={`memory-timeline memory-timeline-vertical ${cssMemorySeconds <= 30 ? "is-warning" : ""}`}
-                  role="progressbar"
-                  aria-label="Tid igjen til å lese begrepene"
-                  aria-valuemin={0}
-                  aria-valuemax={CSS_MEMORY_STUDY_SECONDS}
-                  aria-valuenow={cssMemorySeconds}
-                >
-                  <span style={{ height: cssMemoryTimePercent }} />
+                <div className="memory-ready-action">
+                  <button className="primary-button" onClick={startCssMemoryGame}>
+                    Jeg er klar – finn parene <ChevronRight size={17} />
+                  </button>
                 </div>
-              </div>
+              </>
             ) : cssMemoryPhase === "playing" ? (
               <>
                 <div
