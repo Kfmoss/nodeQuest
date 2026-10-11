@@ -28,7 +28,7 @@
 .streak-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; color: #293e7c; background: #d5f385; }
 .main-area { min-width: 0; flex: 1; display: flex; flex-direction: column; }
 .topbar { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 4.3%; border-bottom: 1px solid #e7e8eb; background: #fff; }
-.breadcrumb, .top-actions, .level-pill, .points-pill, .shop-button, .profile-button { display: flex; align-items: center; }
+.breadcrumb, .top-actions, .level-pill, .points-pill, .shop-button, .feedback-button, .profile-button { display: flex; align-items: center; }
 .breadcrumb { gap: 10px; color: #85899a; font-size: 11px; }
 .breadcrumb strong { color: #252b40; font-weight: 650; }
 .top-actions { gap: 20px; }
@@ -38,6 +38,10 @@
 .coin { color: #d9a21a; font-size: 18px; line-height: 1; }
 .shop-button { gap: 8px; padding: 10px 13px; border: 0; border-radius: 5px; color: #343b50; background: #f4e79f; font-size: 11px; font-weight: 700; transition: background 150ms ease, transform 150ms ease; }
 .shop-button:hover { background: #f4db70; transform: translateY(-1px); }
+.feedback-button { gap: 7px; padding: 9px 11px; border: 1px solid #d6eadf; border-radius: 5px; color: #286c56; background: #eaf6ef; font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background 150ms ease, transform 150ms ease; }
+.feedback-button:hover { background: #d9efdf; transform: translateY(-1px); }
+.feedback-button:focus-visible { outline: 3px solid #4a917b; outline-offset: 2px; }
+.feedback-label-short { display: none; }
 .profile-button { gap: 7px; padding: 0; border: 0; color: #4b5060; background: transparent; font-size: 11px; font-weight: 600; }
 .profile-button img { width: 29px; height: 29px; border: 2px solid white; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px #dfe2e8; }
 .dashboard, .catalog-page { width: min(100%, 1100px); margin: 0 auto; padding: 31px clamp(22px, 4.3vw, 64px) 24px; }
@@ -263,7 +267,10 @@
 @media (max-width: 1050px) {
   .sidebar { width: 220px; flex-basis: 220px; }
   .topbar { padding-inline: 24px; }
-  .top-actions { gap: 13px; }
+  .top-actions { gap: 9px; }
+  .feedback-button { gap: 5px; padding-inline: 8px; }
+  .feedback-label-long { display: none; }
+  .feedback-label-short { display: inline; }
   .dashboard, .catalog-page { padding-inline: 28px; }
   .hero-board { min-height: 350px; }
 }
@@ -312,6 +319,8 @@
   .points-pill strong { font-size: 11px; }
   .shop-button { gap: 5px; padding: 8px; font-size: 0; }
   .shop-button svg { width: 17px; height: 17px; }
+  .feedback-button { gap: 4px; padding: 7px 6px; font-size: 9px; }
+  .feedback-button svg { width: 14px; height: 14px; }
   .profile-button { max-width: 110px; gap: 0; }
   .profile-button span { max-width: 96px; display: block; overflow: hidden; color: #4b5060; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
   .profile-button img, .profile-button > svg { display: none; }

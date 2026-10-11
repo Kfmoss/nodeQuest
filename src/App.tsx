@@ -20,6 +20,7 @@ import {
   Image,
   Layers3,
   Lightbulb,
+  MessageSquareText,
   Monitor,
   Music2,
   Palette,
@@ -1257,6 +1258,17 @@ function App() {
             <button className="shop-button" onClick={() => setView("shop")}>
               <ShoppingBag size={16} /> Butikk
             </button>
+            <a
+              className="feedback-button"
+              href="https://forms.cloud.microsoft/e/7v1TV9Xafz"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Gi tilbakemelding om nodeQuest"
+            >
+              <MessageSquareText size={16} />
+              <span className="feedback-label-long">Tilbakemelding</span>
+              <span className="feedback-label-short">Skjema</span>
+            </a>
             <button
               className="profile-button"
               aria-label={`Elevprofil for ${studentName}`}
