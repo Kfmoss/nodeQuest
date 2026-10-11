@@ -41,6 +41,10 @@ import moto3Image from "./assets/moto3.png";
 import moto4Image from "./assets/moto4.png";
 import moto5Image from "./assets/moto5.png";
 import novaImage from "./assets/novax.png";
+import octopusImage from "./assets/octopus.jpg";
+import orcaImage from "./assets/orca.jpg";
+import sharkImage from "./assets/shark.jpg";
+import turtleImage from "./assets/turtle.jpg";
 import "./App.css";
 
 const topics = [
@@ -158,6 +162,9 @@ const MAX_TASK_TIME_MINUTES = 10;
 const MAX_TASK_TIME_SECONDS = MAX_TASK_TIME_MINUTES * 60;
 const MAX_TASK_POINTS = 10;
 const CSS_MEMORY_STUDY_SECONDS = 120;
+const CSS_MEMORY_GAME_SECONDS = 120;
+const CSS_MEMORY_MAX_POINTS = 100;
+const CSS_MEMORY_FULL_POINTS_THRESHOLD = 90;
 
 const cssMemoryPairs = [
   {
@@ -223,6 +230,13 @@ const createCssMemoryCards = (): CssMemoryCard[] => {
 
   return cards;
 };
+
+const cssMemoryCardCovers = [
+  octopusImage,
+  orcaImage,
+  sharkImage,
+  turtleImage,
+] as const;
 
 type ChoiceQuestion = {
   question: string;
@@ -569,7 +583,7 @@ function App() {
   const [assessmentPassed, setAssessmentPassed] = useState(false);
   const [purchased, setPurchased] = useState(false);
   const [cssMemoryPhase, setCssMemoryPhase] = useState<
-    "study" | "playing" | "complete"
+    "study" | "playing" | "complete" | "expired"
   >("study");
   const [cssMemorySeconds, setCssMemorySeconds] = useState(
     CSS_MEMORY_STUDY_SECONDS,
@@ -578,6 +592,7 @@ function App() {
   const [selectedMemoryCards, setSelectedMemoryCards] = useState<string[]>([]);
   const [matchedMemoryPairs, setMatchedMemoryPairs] = useState<string[]>([]);
   const cssMemoryDeadline = useRef<number | null>(null);
+  const [cssMemoryPoints, setCssMemoryPoints] = useState(0);
 
   useEffect(() => {
     if (!studentName || !studentClass) return;
@@ -623,6 +638,7 @@ function App() {
     setSelectedMemoryCards([]);
     setMatchedMemoryPairs([]);
     setCssMemorySeconds(CSS_MEMORY_STUDY_SECONDS);
+    setCssMemoryPoints(0);
     setCssMemoryPhase("study");
     cssMemoryDeadline.current = Date.now() + CSS_MEMORY_STUDY_SECONDS * 1000;
     setView("css-memory");
@@ -635,6 +651,18 @@ function App() {
       matchedMemoryPairs.includes(card.pairId) ||
       selectedMemoryCards.includes(card.id)
     ) {
+      return;
+    }
+
+    const deadline = cssMemoryDeadline.current;
+    const secondsLeft =
+      deadline === null
+        ? 0
+        : Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    if (secondsLeft === 0) {
+      cssMemoryDeadline.current = null;
+      setCssMemorySeconds(0);
+      setCssMemoryPhase("expired");
       return;
     }
 
@@ -651,6 +679,17 @@ function App() {
       setMatchedMemoryPairs(nextMatchedPairs);
       setSelectedMemoryCards([]);
       if (nextMatchedPairs.length === cssMemoryPairs.length) {
+        const pointsEarned = Math.min(
+          CSS_MEMORY_MAX_POINTS,
+          Math.floor(
+            (secondsLeft / CSS_MEMORY_FULL_POINTS_THRESHOLD) *
+              CSS_MEMORY_MAX_POINTS,
+          ),
+        );
+        cssMemoryDeadline.current = null;
+        setCssMemoryPoints(pointsEarned);
+        setPoints((current) => current + pointsEarned);
+        setTotalPointsEarned((current) => current + pointsEarned);
         setCssMemoryPhase("complete");
       }
       return;
@@ -683,9 +722,10 @@ function App() {
   const currentQuestion = quizQuestions[questionIndex];
   const isCorrectAnswer = answerWasCorrect === true;
   const formattedTime = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
+  const cssMemoryTimePercent = `${(cssMemorySeconds / CSS_MEMORY_GAME_SECONDS) * 100}%`;
 
   useEffect(() => {
-    if (cssMemoryPhase !== "study") return;
+    if (cssMemoryPhase !== "study" && cssMemoryPhase !== "playing") return;
 
     const timer = window.setInterval(() => {
       const deadline = cssMemoryDeadline.current;
@@ -694,11 +734,35 @@ function App() {
       setCssMemorySeconds(secondsLeft);
       if (secondsLeft === 0) {
         cssMemoryDeadline.current = null;
-        setCssMemoryPhase("playing");
+        if (cssMemoryPhase === "study") {
+          cssMemoryDeadline.current = Date.now() + CSS_MEMORY_GAME_SECONDS * 1000;
+          setCssMemorySeconds(CSS_MEMORY_GAME_SECONDS);
+          setCssMemoryPhase("playing");
+        } else {
+          setCssMemoryPhase("expired");
+        }
       }
     }, 200);
 
     return () => window.clearInterval(timer);
+  }, [cssMemoryPhase]);
+
+  useEffect(() => {
+    if (
+      cssMemoryPhase !== "complete" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    confetti({
+      particleCount: 110,
+      spread: 76,
+      startVelocity: 38,
+      gravity: 0.9,
+      origin: { x: 0.5, y: 0.62 },
+      colors: ["#c8f37b", "#54b892", "#e39455", "#c7c9f8", "#ff887a"],
+    });
   }, [cssMemoryPhase]);
 
   useEffect(() => {
@@ -1899,24 +1963,26 @@ function App() {
                   {cssMemoryPhase === "study"
                     ? "Les og prøv å huske begrepene og forklaringene. Når tiden er ute, skjules listen."
                     : cssMemoryPhase === "playing"
-                      ? "Snu to kort om gangen og finn begrepet som hører sammen med forklaringen."
+                      ? "Snu to kort om gangen og finn begrepet som hører sammen med forklaringen. Du har maks to minutter. Fullfør med minst 1:30 igjen for 100 poeng."
                       : "Du fant alle begrepsparene. Godt husket!"}
                 </p>
               </div>
-              {cssMemoryPhase === "study" ? (
+              {cssMemoryPhase === "study" || cssMemoryPhase === "playing" ? (
                 <div
-                  className={`memory-timer ${cssMemorySeconds <= 20 ? "is-warning" : ""}`}
+                  className={`memory-timer ${cssMemorySeconds <= 30 ? "is-warning" : ""}`}
                   role="timer"
-                  aria-label={`${cssMemorySeconds} sekunder igjen til å lese`}
+                  aria-label={`${cssMemorySeconds} sekunder igjen ${
+                    cssMemoryPhase === "study" ? "til å lese" : "av spilletiden"
+                  }`}
                 >
                   <Clock3 size={19} />
-                  <span>Lesetid</span>
+                  <span>{cssMemoryPhase === "study" ? "Lesetid" : "Spilletid"}</span>
                   <strong>
                     {Math.floor(cssMemorySeconds / 60)}:
                     {String(cssMemorySeconds % 60).padStart(2, "0")}
                   </strong>
                 </div>
-              ) : cssMemoryPhase === "playing" ? (
+              ) : cssMemoryPhase === "complete" ? (
                 <div className="memory-progress" role="status">
                   <strong>{matchedMemoryPairs.length} / {cssMemoryPairs.length}</strong>
                   <span>par funnet</span>
@@ -1925,63 +1991,122 @@ function App() {
             </div>
 
             {cssMemoryPhase === "study" ? (
-              <section className="memory-study-list" aria-labelledby="memory-study-title">
-                <h2 id="memory-study-title">Begreper og forklaringer</h2>
-                <dl>
-                  {cssMemoryPairs.map(({ id, term, explanation }) => (
-                    <div className="memory-study-item" key={id}>
-                      <dt>{term}</dt>
-                      <dd>{explanation}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
+              <div className="memory-study-layout">
+                <section className="memory-study-list" aria-labelledby="memory-study-title">
+                  <h2 id="memory-study-title">Begreper og forklaringer</h2>
+                  <dl>
+                    {cssMemoryPairs.map(({ id, term, explanation }) => (
+                      <div className="memory-study-item" key={id}>
+                        <dt>{term}</dt>
+                        <dd>{explanation}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+                <div
+                  className={`memory-timeline memory-timeline-vertical ${cssMemorySeconds <= 30 ? "is-warning" : ""}`}
+                  role="progressbar"
+                  aria-label="Tid igjen til å lese begrepene"
+                  aria-valuemin={0}
+                  aria-valuemax={CSS_MEMORY_STUDY_SECONDS}
+                  aria-valuenow={cssMemorySeconds}
+                >
+                  <span style={{ height: cssMemoryTimePercent }} />
+                </div>
+              </div>
             ) : cssMemoryPhase === "playing" ? (
-              <section className="memory-board" aria-label="Kortspill med CSS-begreper">
-                {cssMemoryCards.map((card) => {
-                  const isSelected = selectedMemoryCards.includes(card.id);
-                  const isMatched = matchedMemoryPairs.includes(card.pairId);
-                  const isRevealed = isSelected || isMatched;
-                  return (
-                    <button
-                      className={`memory-card${isRevealed ? " is-revealed" : ""}${isMatched ? " is-matched" : ""}`}
-                      key={card.id}
-                      onClick={() => selectCssMemoryCard(card)}
-                      aria-label={
-                        isRevealed
-                          ? `${card.kind === "term" ? "Begrep" : "Forklaring"}: ${card.text}${isMatched ? ", par funnet" : ""}`
-                          : "Snu kort"
-                      }
-                      aria-pressed={isRevealed}
-                      disabled={isMatched}
-                    >
-                      {isRevealed ? (
-                        <>
-                          <span className="memory-card-kind">
-                            {card.kind === "term" ? "BEGREP" : "FORKLARING"}
-                          </span>
-                          <span>{card.text}</span>
-                        </>
-                      ) : (
-                        <span className="memory-card-back" aria-hidden="true">
-                          <Code2 size={24} />
-                          <span>?</span>
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </section>
-            ) : (
+              <>
+                <div
+                  className={`memory-timeline memory-timeline-horizontal ${cssMemorySeconds <= 30 ? "is-warning" : ""}`}
+                  role="progressbar"
+                  aria-label="Tid igjen til å finne kortparene"
+                  aria-valuemin={0}
+                  aria-valuemax={CSS_MEMORY_GAME_SECONDS}
+                  aria-valuenow={cssMemorySeconds}
+                >
+                  <span style={{ width: cssMemoryTimePercent }} />
+                </div>
+                <section className="memory-board" aria-label="Kortspill med CSS-begreper">
+                  {cssMemoryCards.map((card, index) => {
+                    const isSelected = selectedMemoryCards.includes(card.id);
+                    const isMatched = matchedMemoryPairs.includes(card.pairId);
+                    const isRevealed = isSelected || isMatched;
+                    return (
+                      <button
+                        className={`memory-card${isRevealed ? " is-revealed" : ""}${isMatched ? " is-matched" : ""}`}
+                        key={card.id}
+                        onClick={() => selectCssMemoryCard(card)}
+                        aria-label={
+                          isRevealed
+                            ? `${card.kind === "term" ? "Begrep" : "Forklaring"}: ${card.text}${isMatched ? ", par funnet" : ""}`
+                            : "Snu kort"
+                        }
+                        aria-pressed={isRevealed}
+                        disabled={isMatched}
+                      >
+                        {isRevealed ? (
+                          <>
+                            <span className="memory-card-kind">
+                              {card.kind === "term" ? "BEGREP" : "FORKLARING"}
+                            </span>
+                            <span>{card.text}</span>
+                          </>
+                        ) : (
+                          <img
+                            className="memory-card-cover"
+                            src={cssMemoryCardCovers[index % cssMemoryCardCovers.length]}
+                            alt=""
+                            aria-hidden="true"
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </section>
+              </>
+            ) : cssMemoryPhase === "complete" ? (
               <section className="memory-complete" role="status">
                 <span className="memory-complete-icon">
                   <Check size={27} />
                 </span>
                 <h2>Alle seks parene er funnet!</h2>
-                <p>Du har koblet hvert CSS-begrep til riktig forklaring.</p>
-                <button className="primary-button" onClick={startCssMemory}>
-                  <RotateCcw size={16} /> Spill igjen
-                </button>
+                <p>
+                  Du har koblet hvert CSS-begrep til riktig forklaring og fått{" "}
+                  <strong>{cssMemoryPoints} poeng</strong>.
+                </p>
+                <div className="memory-result-actions">
+                  <button className="primary-button" onClick={startCssMemory}>
+                    <RotateCcw size={16} /> Spill igjen
+                  </button>
+                  <button
+                    className="memory-secondary-button"
+                    onClick={() => showTasks("HTML, CSS og JavaScript")}
+                  >
+                    Velg en annen oppgave
+                  </button>
+                </div>
+              </section>
+            ) : (
+              <section className="memory-complete memory-expired" role="status">
+                <span className="memory-complete-icon">
+                  <Clock3 size={25} />
+                </span>
+                <h2>Tiden er ute</h2>
+                <p>
+                  Du fant {matchedMemoryPairs.length} av {cssMemoryPairs.length}{" "}
+                  par. Prøv igjen, eller velg en annen oppgave.
+                </p>
+                <div className="memory-result-actions">
+                  <button className="primary-button" onClick={startCssMemory}>
+                    <RotateCcw size={16} /> Prøv igjen
+                  </button>
+                  <button
+                    className="memory-secondary-button"
+                    onClick={() => showTasks("HTML, CSS og JavaScript")}
+                  >
+                    Velg en annen oppgave
+                  </button>
+                </div>
               </section>
             )}
           </section>
@@ -2205,7 +2330,8 @@ function App() {
                     <h2>Husk CSS-begrepene</h2>
                     <p className="task-description">
                       Lær seks grunnleggende CSS-begreper, og finn de seks
-                      parene i et kortspill.
+                      parene i et kortspill. Få 100 poeng hvis du fullfører
+                      med minst 1:30 igjen.
                     </p>
                     <div className="task-meta">
                       <span>Huskespill</span>
