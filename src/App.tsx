@@ -20,6 +20,7 @@ import {
   Image,
   Layers3,
   Lightbulb,
+  RotateCcw,
   MessageSquareText,
   Monitor,
   Music2,
@@ -156,6 +157,72 @@ const motorcycles = [
 const MAX_TASK_TIME_MINUTES = 10;
 const MAX_TASK_TIME_SECONDS = MAX_TASK_TIME_MINUTES * 60;
 const MAX_TASK_POINTS = 10;
+const CSS_MEMORY_STUDY_SECONDS = 120;
+
+const cssMemoryPairs = [
+  {
+    id: "external-css",
+    term: "Ekstern CSS",
+    explanation:
+      "CSS-regler ligger i en egen .css-fil som kobles til HTML-dokumentet med en <link>-tag i <head>.",
+  },
+  {
+    id: "inline-css",
+    term: "Inline CSS",
+    explanation:
+      "CSS skrives direkte på et HTML-element i style-attributtet, for eksempel <p style=\"color: blue;\">.",
+  },
+  {
+    id: "internal-css",
+    term: "Intern CSS",
+    explanation:
+      "CSS-regler skrives i en <style>-tag i <head> i HTML-dokumentet.",
+  },
+  {
+    id: "class-selector",
+    term: "Class-CSS-velger",
+    explanation:
+      "Velger elementer med en bestemt class. I CSS skrives klassen med punktum, for eksempel .kort.",
+  },
+  {
+    id: "id-selector",
+    term: "ID-CSS-velger",
+    explanation:
+      "Velger elementet med en bestemt id. I CSS skrives id-en med firkant, for eksempel #tittel.",
+  },
+  {
+    id: "type-selector",
+    term: "Typevelger (element-CSS-velger)",
+    explanation:
+      "Velger alle HTML-elementer av en bestemt type. Skriv elementnavnet uten tegn foran, for eksempel p for alle avsnitt.",
+  },
+];
+
+type CssMemoryCard = {
+  id: string;
+  pairId: string;
+  kind: "term" | "explanation";
+  text: string;
+};
+
+const createCssMemoryCards = (): CssMemoryCard[] => {
+  const cards = cssMemoryPairs.flatMap(({ id, term, explanation }) => [
+    { id: `${id}-term`, pairId: id, kind: "term" as const, text: term },
+    {
+      id: `${id}-explanation`,
+      pairId: id,
+      kind: "explanation" as const,
+      text: explanation,
+    },
+  ]);
+
+  for (let index = cards.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [cards[index], cards[randomIndex]] = [cards[randomIndex], cards[index]];
+  }
+
+  return cards;
+};
 
 type ChoiceQuestion = {
   question: string;
@@ -501,6 +568,16 @@ function App() {
   const [bestAssessmentScore, setBestAssessmentScore] = useState(0);
   const [assessmentPassed, setAssessmentPassed] = useState(false);
   const [purchased, setPurchased] = useState(false);
+  const [cssMemoryPhase, setCssMemoryPhase] = useState<
+    "study" | "playing" | "complete"
+  >("study");
+  const [cssMemorySeconds, setCssMemorySeconds] = useState(
+    CSS_MEMORY_STUDY_SECONDS,
+  );
+  const [cssMemoryCards, setCssMemoryCards] = useState<CssMemoryCard[]>([]);
+  const [selectedMemoryCards, setSelectedMemoryCards] = useState<string[]>([]);
+  const [matchedMemoryPairs, setMatchedMemoryPairs] = useState<string[]>([]);
+  const cssMemoryDeadline = useRef<number | null>(null);
 
   useEffect(() => {
     if (!studentName || !studentClass) return;
@@ -541,6 +618,47 @@ function App() {
     setView("tasks");
   };
 
+  const startCssMemory = () => {
+    setCssMemoryCards(createCssMemoryCards());
+    setSelectedMemoryCards([]);
+    setMatchedMemoryPairs([]);
+    setCssMemorySeconds(CSS_MEMORY_STUDY_SECONDS);
+    setCssMemoryPhase("study");
+    cssMemoryDeadline.current = Date.now() + CSS_MEMORY_STUDY_SECONDS * 1000;
+    setView("css-memory");
+  };
+
+  const selectCssMemoryCard = (card: CssMemoryCard) => {
+    if (
+      cssMemoryPhase !== "playing" ||
+      selectedMemoryCards.length === 2 ||
+      matchedMemoryPairs.includes(card.pairId) ||
+      selectedMemoryCards.includes(card.id)
+    ) {
+      return;
+    }
+
+    if (selectedMemoryCards.length === 0) {
+      setSelectedMemoryCards([card.id]);
+      return;
+    }
+
+    const firstCard = cssMemoryCards.find(
+      ({ id }) => id === selectedMemoryCards[0],
+    );
+    if (firstCard?.pairId === card.pairId) {
+      const nextMatchedPairs = [...matchedMemoryPairs, card.pairId];
+      setMatchedMemoryPairs(nextMatchedPairs);
+      setSelectedMemoryCards([]);
+      if (nextMatchedPairs.length === cssMemoryPairs.length) {
+        setCssMemoryPhase("complete");
+      }
+      return;
+    }
+
+    setSelectedMemoryCards((current) => [...current, card.id]);
+  };
+
   const buyMotorcycle = (motorcycle: (typeof motorcycles)[number]) => {
     if (ownedMotorcycles.includes(motorcycle.id) || points < motorcycle.price)
       return;
@@ -553,7 +671,11 @@ function App() {
       ? tasks
       : tasks.filter((task) => task.topic === selectedTopic);
   const showCss1 = selectedTopic === "Alle oppgaver" || selectedTopic === "HTML, CSS og JavaScript";
-  const visibleTaskCount = visibleTasks.length + Number(showCss1);
+  const showCssMemory =
+    selectedTopic === "Alle oppgaver" ||
+    selectedTopic === "HTML, CSS og JavaScript";
+  const visibleTaskCount =
+    visibleTasks.length + Number(showCss1) + Number(showCssMemory);
   const visibleResources =
     selectedTopic === "Alle oppgaver"
       ? resources
@@ -561,6 +683,38 @@ function App() {
   const currentQuestion = quizQuestions[questionIndex];
   const isCorrectAnswer = answerWasCorrect === true;
   const formattedTime = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
+
+  useEffect(() => {
+    if (cssMemoryPhase !== "study") return;
+
+    const timer = window.setInterval(() => {
+      const deadline = cssMemoryDeadline.current;
+      if (deadline === null) return;
+      const secondsLeft = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setCssMemorySeconds(secondsLeft);
+      if (secondsLeft === 0) {
+        cssMemoryDeadline.current = null;
+        setCssMemoryPhase("playing");
+      }
+    }, 200);
+
+    return () => window.clearInterval(timer);
+  }, [cssMemoryPhase]);
+
+  useEffect(() => {
+    if (selectedMemoryCards.length !== 2) return;
+
+    const firstCard = cssMemoryCards.find(
+      ({ id }) => id === selectedMemoryCards[0],
+    );
+    const secondCard = cssMemoryCards.find(
+      ({ id }) => id === selectedMemoryCards[1],
+    );
+    if (firstCard?.pairId === secondCard?.pairId) return;
+
+    const timeout = window.setTimeout(() => setSelectedMemoryCards([]), 900);
+    return () => window.clearTimeout(timeout);
+  }, [cssMemoryCards, selectedMemoryCards]);
 
   useEffect(() => {
     if (
@@ -1727,6 +1881,110 @@ function App() {
               <p><strong>Drømmen min?</strong> Å bruke kreativitet og teknologi i en jobb i IT-bransjen.</p>
             </div>
           </section>
+        ) : view === "css-memory" ? (
+          <section className="catalog-page css-memory-page">
+            <button
+              className="back-link"
+              onClick={() => showTasks("HTML, CSS og JavaScript")}
+            >
+              <ArrowLeft size={15} /> Til HTML, CSS og JavaScript
+            </button>
+            <div className="catalog-heading">
+              <div>
+                <p className="eyebrow">
+                  <span className="eyebrow-line" /> HUSKESPILL · GRUNNLEGGENDE CSS
+                </p>
+                <h1>CSS-begreper</h1>
+                <p className="welcome-copy">
+                  {cssMemoryPhase === "study"
+                    ? "Les og prøv å huske begrepene og forklaringene. Når tiden er ute, skjules listen."
+                    : cssMemoryPhase === "playing"
+                      ? "Snu to kort om gangen og finn begrepet som hører sammen med forklaringen."
+                      : "Du fant alle begrepsparene. Godt husket!"}
+                </p>
+              </div>
+              {cssMemoryPhase === "study" ? (
+                <div
+                  className={`memory-timer ${cssMemorySeconds <= 20 ? "is-warning" : ""}`}
+                  role="timer"
+                  aria-label={`${cssMemorySeconds} sekunder igjen til å lese`}
+                >
+                  <Clock3 size={19} />
+                  <span>Lesetid</span>
+                  <strong>
+                    {Math.floor(cssMemorySeconds / 60)}:
+                    {String(cssMemorySeconds % 60).padStart(2, "0")}
+                  </strong>
+                </div>
+              ) : cssMemoryPhase === "playing" ? (
+                <div className="memory-progress" role="status">
+                  <strong>{matchedMemoryPairs.length} / {cssMemoryPairs.length}</strong>
+                  <span>par funnet</span>
+                </div>
+              ) : null}
+            </div>
+
+            {cssMemoryPhase === "study" ? (
+              <section className="memory-study-list" aria-labelledby="memory-study-title">
+                <h2 id="memory-study-title">Begreper og forklaringer</h2>
+                <dl>
+                  {cssMemoryPairs.map(({ id, term, explanation }) => (
+                    <div className="memory-study-item" key={id}>
+                      <dt>{term}</dt>
+                      <dd>{explanation}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ) : cssMemoryPhase === "playing" ? (
+              <section className="memory-board" aria-label="Kortspill med CSS-begreper">
+                {cssMemoryCards.map((card) => {
+                  const isSelected = selectedMemoryCards.includes(card.id);
+                  const isMatched = matchedMemoryPairs.includes(card.pairId);
+                  const isRevealed = isSelected || isMatched;
+                  return (
+                    <button
+                      className={`memory-card${isRevealed ? " is-revealed" : ""}${isMatched ? " is-matched" : ""}`}
+                      key={card.id}
+                      onClick={() => selectCssMemoryCard(card)}
+                      aria-label={
+                        isRevealed
+                          ? `${card.kind === "term" ? "Begrep" : "Forklaring"}: ${card.text}${isMatched ? ", par funnet" : ""}`
+                          : "Snu kort"
+                      }
+                      aria-pressed={isRevealed}
+                      disabled={isMatched}
+                    >
+                      {isRevealed ? (
+                        <>
+                          <span className="memory-card-kind">
+                            {card.kind === "term" ? "BEGREP" : "FORKLARING"}
+                          </span>
+                          <span>{card.text}</span>
+                        </>
+                      ) : (
+                        <span className="memory-card-back" aria-hidden="true">
+                          <Code2 size={24} />
+                          <span>?</span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </section>
+            ) : (
+              <section className="memory-complete" role="status">
+                <span className="memory-complete-icon">
+                  <Check size={27} />
+                </span>
+                <h2>Alle seks parene er funnet!</h2>
+                <p>Du har koblet hvert CSS-begrep til riktig forklaring.</p>
+                <button className="primary-button" onClick={startCssMemory}>
+                  <RotateCcw size={16} /> Spill igjen
+                </button>
+              </section>
+            )}
+          </section>
         ) : view === "css1" ? (
           <section className="catalog-page css1-page">
             <button
@@ -1932,6 +2190,30 @@ function App() {
                       onClick={() => setView("css1")}
                     >
                       Åpne CSS1 <ArrowUpRight size={15} />
+                    </button>
+                  </article>
+                )}
+                {showCssMemory && (
+                  <article className="task-card css-memory-task-card">
+                    <div className="task-card-top">
+                      <span className="task-icon lilac">
+                        <Brain size={21} />
+                      </span>
+                      <span className="task-xp resource-format">2 min lesetid</span>
+                    </div>
+                    <p className="task-topic">HTML, CSS og JavaScript</p>
+                    <h2>Husk CSS-begrepene</h2>
+                    <p className="task-description">
+                      Lær seks grunnleggende CSS-begreper, og finn de seks
+                      parene i et kortspill.
+                    </p>
+                    <div className="task-meta">
+                      <span>Huskespill</span>
+                      <i />
+                      <span>12 kort</span>
+                    </div>
+                    <button className="task-open" onClick={startCssMemory}>
+                      Start oppgave <ArrowUpRight size={15} />
                     </button>
                   </article>
                 )}
