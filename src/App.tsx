@@ -10,6 +10,7 @@ import {
   Braces,
   Check,
   ChevronRight,
+  CircleUserRound,
   Clock3,
   CircleHelp,
   Code2,
@@ -20,6 +21,7 @@ import {
   Image,
   Layers3,
   Lightbulb,
+  LogOut,
   RotateCcw,
   MessageSquareText,
   Monitor,
@@ -546,6 +548,7 @@ function App() {
   const [authToken, setAuthToken] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isFeedbackPromptOpen, setIsFeedbackPromptOpen] = useState(false);
   const [view, setView] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("Alle oppgaver");
@@ -989,6 +992,18 @@ function App() {
     setStudentName(name);
     setStudentClass(user.klasse);
     setAuthToken(token);
+    setIsFeedbackPromptOpen(true);
+  };
+
+  const handleLogout = () => {
+    setIsFeedbackPromptOpen(false);
+    setStudentName("");
+    setStudentClass("");
+    setAuthToken("");
+    setAuthError("");
+    setAuthMode("login");
+    setView("home");
+    setMobileMenuOpen(false);
   };
 
   const handleAuthSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -1474,7 +1489,7 @@ function App() {
               <ShoppingBag size={16} /> Butikk
             </button>
             <a
-              className="feedback-button"
+              className={`feedback-button${isFeedbackPromptOpen ? " is-prompt-target" : ""}`}
               href="https://forms.cloud.microsoft/e/7v1TV9Xafz"
               target="_blank"
               rel="noopener noreferrer"
@@ -1489,10 +1504,47 @@ function App() {
               aria-label={`Elevprofil for ${studentName}`}
               onClick={() => setView("profile")}
             >
+              <CircleUserRound className="profile-icon" size={17} aria-hidden="true" />
               <span>{studentName}</span>
+            </button>
+            <button
+              className="logout-button"
+              onClick={handleLogout}
+              aria-label="Logg ut"
+              title="Logg ut"
+            >
+              <LogOut size={16} />
+              <span>Logg ut</span>
             </button>
           </div>
         </header>
+
+        {isFeedbackPromptOpen && (
+          <div className="feedback-prompt-backdrop">
+            <section
+              className="feedback-prompt"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="feedback-prompt-title"
+              aria-describedby="feedback-prompt-message"
+            >
+              <ArrowLeft className="feedback-prompt-arrow" size={30} aria-hidden="true" />
+              <p id="feedback-prompt-title">
+                Vi trenger din tilbakemelding slik at vi kan forbedre nodeQuest.
+              </p>
+              <p id="feedback-prompt-message">
+                Hjelp oss å gjøre nodeQuest til den beste e-læringsappen!
+              </p>
+              <button
+                className="primary-button"
+                onClick={() => setIsFeedbackPromptOpen(false)}
+                autoFocus
+              >
+                Jeg forstår
+              </button>
+            </section>
+          </div>
+        )}
 
         {view === "home" ? (
           <section className="dashboard">
