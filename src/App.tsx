@@ -36,8 +36,8 @@ import {
   Zap,
 } from "lucide-react";
 import amandaImage from "./assets/amanda.png";
-// import appLogo from "./assets/logo.png";
-import appLogo from "https://api.nodequest.org/assets/logoer/logo_nodeQuest.png";
+import appLogo from "./assets/logo.png";
+// import appLogo from "https://api.nodequest.org/assets/logoer/logo_nodeQuest.png";
 import moto1Image from "./assets/moto1.png";
 import moto2Image from "./assets/moto2.png";
 import moto3Image from "./assets/moto3.png";
