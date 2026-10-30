@@ -165,6 +165,7 @@ const MAX_TASK_TIME_MINUTES = 10;
 const MAX_TASK_TIME_SECONDS = MAX_TASK_TIME_MINUTES * 60;
 const MAX_TASK_POINTS = 10;
 const CSS_MEMORY_GAME_SECONDS = 120;
+const CSS_MEMORY_SECONDS_PER_CARD_CLICK = 5;
 const CSS_MEMORY_MAX_POINTS = 100;
 const CSS_MEMORY_FULL_POINTS_THRESHOLD = 90;
 
@@ -589,6 +590,7 @@ function App() {
     "study" | "playing" | "complete" | "expired"
   >("study");
   const [cssMemorySeconds, setCssMemorySeconds] = useState(CSS_MEMORY_GAME_SECONDS);
+  const [cssMemoryTotalSeconds, setCssMemoryTotalSeconds] = useState(CSS_MEMORY_GAME_SECONDS);
   const [cssMemoryCards, setCssMemoryCards] = useState<CssMemoryCard[]>([]);
   const [selectedMemoryCards, setSelectedMemoryCards] = useState<string[]>([]);
   const [matchedMemoryPairs, setMatchedMemoryPairs] = useState<string[]>([]);
@@ -639,6 +641,7 @@ function App() {
     setSelectedMemoryCards([]);
     setMatchedMemoryPairs([]);
     setCssMemorySeconds(CSS_MEMORY_GAME_SECONDS);
+    setCssMemoryTotalSeconds(CSS_MEMORY_GAME_SECONDS);
     setCssMemoryPoints(0);
     setCssMemoryPhase("study");
     cssMemoryDeadline.current = null;
@@ -647,6 +650,7 @@ function App() {
 
   const startCssMemoryGame = () => {
     setCssMemorySeconds(CSS_MEMORY_GAME_SECONDS);
+    setCssMemoryTotalSeconds(CSS_MEMORY_GAME_SECONDS);
     cssMemoryDeadline.current = Date.now() + CSS_MEMORY_GAME_SECONDS * 1000;
     setCssMemoryPhase("playing");
   };
@@ -662,16 +666,26 @@ function App() {
     }
 
     const deadline = cssMemoryDeadline.current;
-    const secondsLeft =
+    const secondsLeftBeforeClick =
       deadline === null
         ? 0
         : Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
-    if (secondsLeft === 0) {
+    if (secondsLeftBeforeClick === 0 || deadline === null) {
       cssMemoryDeadline.current = null;
       setCssMemorySeconds(0);
       setCssMemoryPhase("expired");
       return;
     }
+
+    const extendedDeadline =
+      deadline + CSS_MEMORY_SECONDS_PER_CARD_CLICK * 1000;
+    cssMemoryDeadline.current = extendedDeadline;
+    const secondsLeft =
+      secondsLeftBeforeClick + CSS_MEMORY_SECONDS_PER_CARD_CLICK;
+    setCssMemorySeconds(secondsLeft);
+    setCssMemoryTotalSeconds(
+      (current) => current + CSS_MEMORY_SECONDS_PER_CARD_CLICK,
+    );
 
     if (selectedMemoryCards.length === 0) {
       setSelectedMemoryCards([card.id]);
@@ -729,7 +743,7 @@ function App() {
   const currentQuestion = quizQuestions[questionIndex];
   const isCorrectAnswer = answerWasCorrect === true;
   const formattedTime = `${String(Math.floor(remainingSeconds / 60)).padStart(2, "0")}:${String(remainingSeconds % 60).padStart(2, "0")}`;
-  const cssMemoryTimePercent = `${(cssMemorySeconds / CSS_MEMORY_GAME_SECONDS) * 100}%`;
+  const cssMemoryTimePercent = `${(cssMemorySeconds / cssMemoryTotalSeconds) * 100}%`;
 
   useEffect(() => {
     if (cssMemoryPhase !== "playing") return;
@@ -777,7 +791,7 @@ function App() {
     );
     if (firstCard?.pairId === secondCard?.pairId) return;
 
-    const timeout = window.setTimeout(() => setSelectedMemoryCards([]), 900);
+    const timeout = window.setTimeout(() => setSelectedMemoryCards([]), 3000);
     return () => window.clearTimeout(timeout);
   }, [cssMemoryCards, selectedMemoryCards]);
 
@@ -2013,7 +2027,7 @@ function App() {
                   {cssMemoryPhase === "study"
                     ? "Les begrepene så lenge du trenger. Når du er klar, starter en kortspillrunde på to minutter."
                     : cssMemoryPhase === "playing"
-                      ? "Snu to kort om gangen og finn begrepet som hører sammen med forklaringen. Du har maks to minutter. Fullfør med minst 1:30 igjen for 100 poeng."
+                      ? "Snu to kort om gangen og finn begrepet som hører sammen med forklaringen. Hvert korttrykk gir 5 ekstra sekunder. Fullfør med minst 1:30 igjen for 100 poeng."
                       : "Du fant alle begrepsparene. Godt husket!"}
                 </p>
               </div>
@@ -2087,7 +2101,7 @@ function App() {
                   role="progressbar"
                   aria-label="Tid igjen til å finne kortparene"
                   aria-valuemin={0}
-                  aria-valuemax={CSS_MEMORY_GAME_SECONDS}
+                  aria-valuemax={cssMemoryTotalSeconds}
                   aria-valuenow={cssMemorySeconds}
                 >
                   <span style={{ width: cssMemoryTimePercent }} />
