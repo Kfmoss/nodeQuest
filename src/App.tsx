@@ -60,6 +60,32 @@ const topics = [
   { label: "Databaser", icon: Database, color: "lilac" },
 ];
 
+const serverServiceCategories = [
+  {
+    name: "Hardware",
+    topics: [
+      "Ruter",
+      "Switch",
+      "Server",
+      "Harddisk",
+      "RAM",
+      "Nettverkskabler",
+      "Ethernet-port",
+    ],
+  },
+  {
+    name: "Tjenester og software",
+    topics: [
+      "IP-adresse",
+      "IPv4 og IPv6",
+      "MAC-adresse",
+      "Tunneling og VPN",
+      "DHCP",
+      "DNS-server",
+    ],
+  },
+];
+
 const tasks = [
   {
     title: "Bygg din første nettside",
@@ -2355,6 +2381,26 @@ function App() {
                 </span>
               </div>
             </div>
+            {selectedTopic === "Server og tjenester" && (
+              <section
+                className="server-service-categories"
+                aria-labelledby="server-service-categories-title"
+              >
+                <h2 id="server-service-categories-title">Kategorier</h2>
+                <div className="server-service-category-grid">
+                  {serverServiceCategories.map(({ name, topics: categoryTopics }) => (
+                    <section className="server-service-category" key={name}>
+                      <h3>{name}</h3>
+                      <ul>
+                        {categoryTopics.map((topic) => (
+                          <li key={topic}>{topic}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              </section>
+            )}
             <div className="catalog-tabs">
               <button
                 className={catalogTab === "tasks" ? "tab-active" : ""}
